@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CH4 MAROC - Géoportail SIG</title>
+  <script>
+    (function () {
+      try { document.documentElement.setAttribute('data-theme', localStorage.getItem('ch4theme') || 'dark'); }
+      catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-logo">CH4</div>
+        <div class="brand-text">
+          <div class="name">CH4 MAROC</div>
+          <div class="tagline" data-i18n="brand.tagline">Géoportail national de qualité de l'air</div>
+        </div>
+      </div>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="accueil.html" class="active"><i class="fas fa-home"></i> <span data-i18n="nav.accueil">Accueil</span></a></li>
+          <li><a href="carte_interactive.html"><i class="fas fa-map-marked-alt"></i> <span data-i18n="nav.carte">Carte</span></a></li>
+          <li><a href="statistiques.html"><i class="fas fa-chart-line"></i> <span data-i18n="nav.stats">Statistiques</span></a></li>
+          <li><a href="articles.html"><i class="fas fa-book-open"></i> <span data-i18n="nav.articles">Articles</span></a></li>
+          <li><a href="assistant.html"><i class="fas fa-robot"></i> <span data-i18n="nav.assistant">Assistant IA</span></a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="search-bar" style="position:relative;">
+          <input type="search" id="globalSearch" data-i18n-ph="search.placeholder" placeholder="Recherche de sections, articles, régions..." aria-label="Recherche" autocomplete="off" />
+          <i class="fa fa-search search-icon"></i>
+          <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Basculer le thème" title="Basculer clair/sombre">
+          <i class="fas fa-sun"></i>
+        </button>
+        <div class="lang-toggle" id="langToggle">
+          <button class="lang-btn active" data-lang="fr">FR</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+        <div class="user-avatar" title="Projet de Fin d'Études 2026">👤</div>
+      </div>
+    </header>
+
+    <div class="submenu" role="navigation" aria-label="Catégories thématiques">
+      <a href="carte_interactive.html?model=fod"   data-i18n="sub.fod">Modèle FOD</a>
+      <a href="carte_interactive.html?model=tno"   data-i18n="sub.tno">Modèle TNO</a>
+      <a href="statistiques.html"                  data-i18n="sub.analyse">Analyse</a>
+      <a href="carte_interactive.html?year=2024"   data-i18n="sub.tendances">Tendances 2024</a>
+      <a href="articles.html"                      data-i18n="sub.publications">Publications</a>
+    </div>
+
+    <main class="hero-grid">
+      <section class="hero">
+        <div class="highlight" data-i18n="hero.badge">Portail officiel de suivi de la qualité de l'air et des émissions CH4</div>
+        <h1 data-i18n="hero.h1">Bienvenue sur le géoportail <span class="accent">CH4 MAROC</span></h1>
+        <p data-i18n="hero.p1">
+          CH4 MAROC met à disposition des données géospatiales nationales et régionales dédiées aux émissions de méthane, à l'air et aux ressources naturelles.
+          Découvrez une interface intuitive pour consulter des couches SIG, explorer des analyses thématiques et suivre l'évolution des émissions par région et commune.
+        </p>
+        <p data-i18n="hero.p2">
+          Notre plateforme réunit des ressources cartographiques, des outils d'analyse et des visualisations interactives pour les décideurs, les chercheurs et les acteurs territoriaux.
+          Accédez à des cartes, rapports, publications et commentaires communautaires dans un environnement sécurisé et professionnel.
+        </p>
+
+        <div class="hero-cta">
+          <a href="carte_interactive.html" class="cta-btn cta-primary" data-i18n="cta.map">
+            <i class="fas fa-map-marked-alt"></i> Accéder à la carte interactive
+          </a>
+          <a href="#how-it-works" class="cta-btn cta-secondary" data-i18n="cta.how">
+            <i class="fas fa-info-circle"></i> Comment ça marche
+          </a>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <strong class="counter" data-target="1541">0</strong>
+            <span data-i18n="stat.communes">Communes analysées</span>
+          </div>
+          <div class="stat-card">
+            <strong class="counter" data-target="12">0</strong>
+            <span data-i18n="stat.regions">Régions couvertes</span>
+          </div>
+          <div class="stat-card">
+            <strong class="counter" data-target="20">0</strong>
+            <span data-i18n="stat.years">Années de données</span>
+          </div>
+          <div class="stat-card">
+            <strong class="counter" data-target="2">0</strong>
+            <span data-i18n="stat.models">Modèles intégrés</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="widgets">
+        <article class="card">
+          <header>
+            <h2 data-i18n="pubs.title">Dernières Publications</h2>
+            <a href="articles.html" data-i18n="pubs.viewall">Voir tout</a>
+          </header>
+          <ul class="publication-list">
+            <li class="publication-item">
+              <a href="https://www.sciencedirect.com/science/article/abs/pii/S0924224423002832" target="_blank" rel="noopener" class="pub-thumb-link">
+                <img src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=400&q=80" alt="Décharge Oum Azza Maroc" />
+              </a>
+              <div class="publication-meta">
+                <a href="https://www.sciencedirect.com/science/article/abs/pii/S0924224423002832" target="_blank" rel="noopener">
+                  <strong>Valorisation du biogaz à la décharge d'Oum Azza (Maroc)</strong>
+                </a>
+                <small><i class="fas fa-journal-whills"></i> Food Research International — 2023</small>
+                <span class="badge"><i class="fas fa-tag"></i> Maroc · CH4 · Énergie</span>
+              </div>
+            </li>
+            <li class="publication-item">
+              <a href="https://www.nature.com/articles/s41893-024-01307-9" target="_blank" rel="noopener" class="pub-thumb-link">
+                <img src="https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&w=400&q=80" alt="Émissions méthane mondiales" />
+              </a>
+              <div class="publication-meta">
+                <a href="https://www.nature.com/articles/s41893-024-01307-9" target="_blank" rel="noopener">
+                  <strong>Methane emissions from landfills differentially underestimated worldwide</strong>
+                </a>
+                <small><i class="fas fa-journal-whills"></i> Nature Sustainability — 2024</small>
+                <span class="badge"><i class="fas fa-tag"></i> Global · FOD · Modélisation</span>
+              </div>
+            </li>
+            <li class="publication-item">
+              <a href="https://journals.sagepub.com/doi/10.1177/0734242X231200742" target="_blank" rel="noopener" class="pub-thumb-link">
+                <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=400&q=80" alt="Gestion décharge" />
+              </a>
+              <div class="publication-meta">
+                <a href="https://journals.sagepub.com/doi/10.1177/0734242X231200742" target="_blank" rel="noopener">
+                  <strong>Impact of landfill management approaches on methane emissions</strong>
+                </a>
+                <small><i class="fas fa-journal-whills"></i> Waste Management & Research — 2024</small>
+                <span class="badge"><i class="fas fa-tag"></i> FOD · TNO · GES</span>
+              </div>
+            </li>
+            <li class="publication-item">
+              <a href="https://www.frontiersin.org/journals/sustainable-cities/articles/10.3389/frsc.2024.1432995/full" target="_blank" rel="noopener" class="pub-thumb-link">
+                <img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80" alt="Décharge urbaine" />
+              </a>
+              <div class="publication-meta">
+                <a href="https://www.frontiersin.org/journals/sustainable-cities/articles/10.3389/frsc.2024.1432995/full" target="_blank" rel="noopener">
+                  <strong>Methane emissions from municipal landfills — FOD case study 2024</strong>
+                </a>
+                <small><i class="fas fa-journal-whills"></i> Frontiers in Sustainable Cities — 2024</small>
+                <span class="badge"><i class="fas fa-tag"></i> FOD · Déchets · Énergie</span>
+              </div>
+            </li>
+            <li class="publication-item">
+              <a href="https://www.scirp.org/journal/paperinformation?paperid=137061" target="_blank" rel="noopener" class="pub-thumb-link">
+                <img src="https://images.unsplash.com/photo-1581093588401-fbb62a02f120?auto=format&fit=crop&w=400&q=80" alt="Modèle FOD décharge" />
+              </a>
+              <div class="publication-meta">
+                <a href="https://www.scirp.org/journal/paperinformation?paperid=137061" target="_blank" rel="noopener">
+                  <strong>Landfill Gas Renewable Energy Potential using First-Order Decay (FOD) Models</strong>
+                </a>
+                <small><i class="fas fa-journal-whills"></i> SCIRP Open Journal — 2024</small>
+                <span class="badge"><i class="fas fa-tag"></i> FOD · Biogaz · Afrique</span>
+              </div>
+            </li>
+          </ul>
+          <div class="highlight-panel">
+            <span>Sources : Nature, Frontiers, ScienceDirect, SAGE</span>
+            <a href="https://scholar.google.com/scholar?q=methane+landfill+FOD+Morocco" target="_blank" rel="noopener">Voir plus</a>
+          </div>
+        </article>
+
+      </aside>
+    </main>
+
+    <!-- ===== COMMENT ÇA MARCHE ===== -->
+    <section class="how-section" id="how-it-works">
+      <h2 class="section-title" data-i18n="how.title"><i class="fas fa-route"></i> Comment ça marche</h2>
+      <p class="section-sub" data-i18n="how.sub">En trois étapes simples, explorez et analysez les émissions de méthane sur le territoire marocain.</p>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-icon"><i class="fas fa-sliders-h"></i></div>
+          <h3 data-i18n="how.s1.title">Choisir vos paramètres</h3>
+          <p data-i18n="how.s1.desc">Sélectionnez le modèle (FOD ou TNO), l'année (1994–2024) et le niveau d'affichage (régions ou communes) depuis le panneau latéral.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-icon"><i class="fas fa-map-marked-alt"></i></div>
+          <h3 data-i18n="how.s2.title">Explorer la carte</h3>
+          <p data-i18n="how.s2.desc">Naviguez sur la carte interactive, cliquez sur une zone pour afficher ses émissions CH4, utilisez la recherche ou lancez l'animation temporelle.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-icon"><i class="fas fa-file-export"></i></div>
+          <h3 data-i18n="how.s3.title">Exporter vos données</h3>
+          <p data-i18n="how.s3.desc">Téléchargez les résultats en CSV, GeoJSON, PNG ou PDF. Partagez votre vue via un lien URL généré automatiquement.</p>
+        </div>
+      </div>
+      <div class="how-cta">
+        <a href="carte_interactive.html" class="cta-btn cta-primary" data-i18n="how.cta"><i class="fas fa-play"></i> Commencer maintenant</a>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">CH4</div>
+        <p data-i18n="footer.brand.desc">Géoportail national de cartographie des émissions de méthane issues des déchets ménagers solides au Maroc.</p>
+        <div class="footer-socials">
+          <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+          <a href="#" title="ResearchGate"><i class="fab fa-researchgate"></i></a>
+          <a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.nav.title">Navigation</h4>
+        <ul>
+          <li><a href="accueil.html"><i class="fas fa-home"></i> Accueil</a></li>
+          <li><a href="carte_interactive.html"><i class="fas fa-map"></i> Carte interactive</a></li>
+          <li><a href="statistiques.html"><i class="fas fa-chart-line"></i> Statistiques</a></li>
+          <li><a href="donnees.html"><i class="fas fa-database"></i> Données</a></li>
+          <li><a href="articles.html"><i class="fas fa-book-open"></i> Articles</a></li>
+          <li><a href="#how-it-works"><i class="fas fa-route"></i> Comment ça marche</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.src.title">Sources de données</h4>
+        <ul>
+          <li><a href="https://www.ipcc-nggip.iges.or.jp/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> IPCC NGGIP</a></li>
+          <li><a href="http://environnement.gov.ma/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Min. Environnement Maroc</a></li>
+          <li><a href="https://www.hcp.ma/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> HCP Maroc</a></li>
+          <li><a href="https://www.openstreetmap.org/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> OpenStreetMap</a></li>
+          <li><a href="https://www.esri.com/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Esri Satellite</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.contact.title">Contact</h4>
+        <ul class="footer-contact">
+          <li><i class="fas fa-envelope"></i> contact@ch4maroc.ma</li>
+          <li><i class="fas fa-university"></i> Université — Département SIG</li>
+          <li><i class="fas fa-map-marker-alt"></i> Maroc</li>
+        </ul>
+        <div class="footer-badge" data-i18n="footer.badge">
+          <i class="fas fa-shield-alt"></i> Données à usage académique
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span data-i18n="footer.bot.left">© 2026 CH4 MAROC — Projet de Fin d'Études. Tous droits réservés.</span>
+      <span data-i18n="footer.bot.right">Développé avec <i class="fas fa-heart" style="color:#ff5c35;"></i> — Leaflet · GeoJSON · IPCC FOD/TNO</span>
+    </div>
+  </footer>
+
+  <script src="js/common.js"></script>
+</body>
+</html>

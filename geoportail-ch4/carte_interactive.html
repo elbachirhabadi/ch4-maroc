@@ -1,0 +1,2771 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>CH4 Maroc – Carte Dynamique</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/@mapbox/shp-write@0.4.3/shpwrite.js"></script>
+<style>
+html, body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;}
+body{font-family:Arial,Helvetica,sans-serif;background:#f4f4f4;position:relative;}
+#map{height:calc(100vh - 72px);}
+
+.topbar{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  background:#131b34;
+  color:#fff;
+  padding:16px 22px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.topbar .brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-weight:700;
+  font-size:1rem;
+}
+.topbar .brand .logo{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg, #ff5c35, #d13a1a);
+  color:#fff;
+  font-size:1rem;
+  font-weight:700;
+}
+.topbar .brand .title{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.topbar .brand .title strong{
+  font-size:1rem;
+}
+.topbar .brand .title span{
+  font-size:0.84rem;
+  color:#b1bbd6;
+}
+.topbar .search-box{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%, -50%);
+  width:520px;
+  max-width:520px;
+}
+.topbar .search-box .search-icon{
+  position:absolute;
+  left:16px;
+  top:50%;
+  transform:translateY(-50%);
+  color:rgba(255,255,255,0.55);
+  font-size:0.9rem;
+  pointer-events:none;
+}
+.topbar .search-box input{
+  width:100%;
+  border:none;
+  border-radius:999px;
+  padding:14px 18px 14px 40px;
+  background:rgba(255,255,255,0.06);
+  color:#fff;
+  outline:none;
+  font-size:0.96rem;
+  border:1px solid rgba(255,255,255,0.12);
+  box-sizing:border-box;
+}
+.topbar .search-box input::placeholder{
+  color:rgba(255,255,255,0.65);
+}
+.topbar .search-box::before{
+  display:none;
+}
+.search-results{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.18);
+  overflow:hidden;
+  z-index:30000;
+  max-height:280px;
+  overflow-y:auto;
+  display:none;
+}
+.search-results.visible{
+  display:block;
+}
+.search-result-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 16px;
+  cursor:pointer;
+  font-size:0.9rem;
+  color:#111827;
+  border-bottom:1px solid #f3f4f6;
+  transition:background .15s;
+}
+.search-result-item:last-child{
+  border-bottom:none;
+}
+.search-result-item:hover,
+.search-result-item.active{
+  background:#fef2f2;
+}
+.search-result-item .result-icon{
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  display:grid;
+  place-items:center;
+  font-size:0.75rem;
+  flex-shrink:0;
+}
+.search-result-item .result-icon.region{
+  background:#fee2e2;
+  color:#d12d2d;
+}
+.search-result-item .result-icon.commune{
+  background:#dbeafe;
+  color:#1d4ed8;
+}
+.search-result-item .result-info{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.search-result-item .result-name{
+  font-weight:600;
+  font-size:0.88rem;
+}
+.search-result-item .result-type{
+  font-size:0.74rem;
+  color:#6b7280;
+}
+.search-result-item .result-val{
+  margin-left:auto;
+  font-size:0.78rem;
+  font-weight:700;
+  color:#d12d2d;
+  white-space:nowrap;
+}
+.search-no-result{
+  padding:16px;
+  text-align:center;
+  color:#6b7280;
+  font-size:0.88rem;
+}
+
+.topbar nav{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+}
+
+.topbar nav a{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#fff;
+  text-decoration:none;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.08);
+  font-size:0.88rem;
+  transition:background .2s ease;
+}
+
+.topbar nav a:hover,
+.topbar nav a.active{
+  background:rgba(255,255,255,0.16);
+}
+
+.topbar nav a i{
+  width:18px;
+  text-align:center;
+  color:#ffcc00;
+}
+
+.topbar .lang-toggle{
+  display:flex;
+  gap:4px;
+  background:rgba(255,255,255,0.08);
+  border-radius:999px;
+  padding:4px;
+  position:relative;
+  z-index:30;
+}
+.topbar .lang-toggle .lang-btn{
+  border:none;
+  background:transparent;
+  color:rgba(255,255,255,0.7);
+  font-size:0.78rem;
+  font-weight:700;
+  padding:4px 10px;
+  border-radius:999px;
+  cursor:pointer;
+  transition:background .15s, color .15s;
+}
+.topbar .lang-toggle .lang-btn:hover{
+  color:#fff;
+}
+.topbar .lang-toggle .lang-btn.active{
+  background:#d12d2d;
+  color:#fff;
+}
+
+.compass-rose {
+  position: absolute;
+  top: 86px;
+  left: 400px;
+  z-index: 10003;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  transition: left 0.3s ease;
+}
+.compass-rose.sidebar-collapsed {
+  left: 20px;
+}
+.compass-rose svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.20));
+}
+
+.map-toolbar{
+  position:absolute;
+  right:18px;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:10002;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  padding:8px;
+  width:56px;
+  box-sizing:border-box;
+  background:#ffffff;
+  border-radius:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.15);
+}
+.map-toolbar button{
+  width:40px;
+  height:40px;
+  min-width:40px;
+  min-height:40px;
+  flex-shrink:0;
+  border:none;
+  border-radius:10px;
+  background:#ffffff;
+  color:#d12d2d;
+  font-size:16px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .15s ease, color .15s ease;
+}
+.map-toolbar button:hover{
+  background:#fff0ee;
+  color:#d12d2d;
+}
+.map-toolbar button.active{
+  background:#d12d2d;
+  color:#ffffff;
+}
+.map-toolbar button[data-action="toggle-drag"],
+.map-toolbar button[data-action="toggle-satellite"],
+.map-toolbar button[data-action="toggle-grid"]{
+  background:#d12d2d;
+  color:#ffffff;
+}
+.map-toolbar button[data-action="toggle-drag"]:hover,
+.map-toolbar button[data-action="toggle-satellite"]:hover,
+.map-toolbar button[data-action="toggle-grid"]:hover{
+  background:#b91c1c;
+  color:#ffffff;
+}
+.map-toolbar .separator{
+  width:32px;
+  height:1px;
+  background:#e5e7eb;
+  flex-shrink:0;
+  margin:2px 0;
+}
+.coordinate-bubble{
+  position:absolute;
+  right:14px;
+  bottom:14px;
+  z-index:10000;
+  min-width:220px;
+  padding:10px 14px;
+  background:rgba(255,255,255,0.95);
+  border-radius:24px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.18);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:0.95rem;
+  color:#222;
+}
+.coordinate-bubble .icon{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f2f2f2;
+  color:#d12d2d;
+  font-size:18px;
+}
+.coordinate-bubble .coords{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  line-height:1.2;
+}
+.coordinate-bubble .coords strong{
+  min-width:60px;
+  display:inline-block;
+}
+.coordinate-bubble .coords span{
+  white-space:nowrap;
+}
+
+.sidebar{
+  position:absolute;
+  top:80px;
+  left:8px;
+  bottom:8px;
+  z-index:10001;
+  width:320px;
+  max-height:calc(100vh - 88px);
+  overflow-y:auto;
+  background:rgba(255,255,255,0.98);
+  border-radius:20px;
+  box-shadow:0 30px 60px rgba(0,0,0,0.14);
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+  transition:transform 0.3s ease;
+}
+.sidebar.collapsed{
+  transform:translateX(-360px);
+}
+#sidebarToggle{
+  position:absolute;
+  top:50%;
+  left:350px;
+  transform:translateY(-50%);
+  z-index:10002;
+  width:22px;
+  height:48px;
+  background:#ffffff;
+  border:none;
+  border-radius:0 10px 10px 0;
+  box-shadow:4px 0 12px rgba(0,0,0,0.12);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#6b7280;
+  font-size:11px;
+  transition:left 0.3s ease;
+}
+#sidebarToggle:hover{
+  background:#f9fafb;
+  color:#d12d2d;
+}
+
+.sidebar-header{
+  display:flex;
+  align-items:flex-start;
+  gap:16px;
+}
+
+.sidebar-icon{
+  width:52px;
+  height:52px;
+  border-radius:18px;
+  background:#d12d2d;
+  color:#fff;
+  display:grid;
+  place-items:center;
+  font-size:1.25rem;
+  box-shadow:0 10px 24px rgba(209,45,45,0.18);
+}
+
+.sidebar-title strong{
+  display:block;
+  font-size:1.05rem;
+  line-height:1.3;
+}
+
+.sidebar-title span{
+  display:block;
+  margin-top:4px;
+  color:#4b5563;
+  font-size:0.94rem;
+  line-height:1.5;
+}
+
+.sidebar-section{
+  background:#fbfbfd;
+  border:1px solid #eef1f7;
+  border-radius:20px;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.sidebar-section h3{
+  margin:0;
+  font-size:0.92rem;
+  color:#111827;
+  letter-spacing:0.02em;
+  text-transform:uppercase;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.field label{
+  color:#6b7280;
+  font-size:0.78rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+}
+
+.field select{
+  width:100%;
+  border:1px solid #d1d5db;
+  border-radius:16px;
+  padding:12px 14px;
+  background:#fff;
+  color:#111827;
+  font-size:0.95rem;
+  outline:none;
+}
+
+.sidebar-pill-group{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.mode-btn{
+  flex:1;
+  min-width:115px;
+  border:none;
+  border-radius:16px;
+  padding:12px 14px;
+  background:#eef2ff;
+  color:#1f2937;
+  font-size:0.92rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:background .2s ease, transform .15s ease;
+}
+
+.mode-btn:hover{
+  background:#e0e7ff;
+}
+
+.mode-btn.active{
+  background:#d12d2d;
+  color:#fff;
+}
+
+.sidebar-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.action-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  border:none;
+  border-radius:16px;
+  padding:14px 12px;
+  font-size:0.92rem;
+  font-weight:700;
+  cursor:pointer;
+  background:#fff;
+  color:#111827;
+  box-shadow:0 12px 24px rgba(15,23,42,0.08);
+  transition:transform .15s ease, background .2s ease;
+}
+
+.action-btn:hover{
+  transform:translateY(-1px);
+}
+
+.action-btn.primary{
+  background:#d12d2d;
+  color:#fff;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.spinning{ animation:spin 0.7s linear infinite; }
+
+.anim-years{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:3px;
+  max-height:84px;
+  overflow-y:auto;
+}
+.anim-year-dot{
+  flex:0 0 auto;
+  min-width:38px;
+  text-align:center;
+  font-size:0.72rem;
+  font-weight:700;
+  color:#9ca3af;
+  padding:5px 7px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:background .2s, color .2s;
+}
+.anim-year-dot:hover{ background:#f3f4f6; color:#111827; }
+.anim-year-dot.active{
+  background:#d12d2d;
+  color:#fff;
+}
+.anim-progress-bar{
+  width:100%;
+  height:4px;
+  background:#e5e7eb;
+  border-radius:99px;
+  overflow:hidden;
+}
+.anim-progress-fill{
+  height:100%;
+  background:#d12d2d;
+  border-radius:99px;
+  width:100%;
+  transition:width 0.4s ease;
+}
+.anim-controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.anim-btn{
+  width:36px;
+  height:36px;
+  border:none;
+  border-radius:10px;
+  background:#f3f4f6;
+  color:#374151;
+  font-size:13px;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  transition:background .15s, color .15s;
+  flex-shrink:0;
+}
+.anim-btn:hover{ background:#e5e7eb; }
+.anim-btn.anim-play{
+  background:#d12d2d;
+  color:#fff;
+  width:42px;
+  height:42px;
+  font-size:15px;
+}
+.anim-btn.anim-play:hover{ background:#b91c1c; }
+#animSpeed{
+  flex:1;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:8px 10px;
+  font-size:0.82rem;
+  color:#374151;
+  background:#fff;
+  outline:none;
+  cursor:pointer;
+}
+
+
+.legend-bar{
+  position:absolute;
+  bottom:18px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:10001;
+  background:rgba(255,255,255,0.96);
+  border-radius:20px;
+  padding:6px 14px;
+  box-shadow:0 4px 18px rgba(0,0,0,0.13);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:0.75rem;
+  white-space:nowrap;
+  pointer-events:none;
+}
+.legend-bar .legend-label{
+  font-weight:700;
+  color:#d12d2d;
+  font-size:0.78rem;
+  letter-spacing:0.04em;
+  margin-right:2px;
+}
+.legend-bar .legend-swatches{
+  display:flex;
+  align-items:center;
+  gap:2px;
+}
+.legend-bar .legend-swatches span{
+  display:inline-block;
+  width:18px;
+  height:12px;
+  border-radius:3px;
+}
+.legend-bar .legend-unit{
+  color:#6b7280;
+  font-size:0.72rem;
+  margin-left:4px;
+}
+.legend-bar .legend-min,
+.legend-bar .legend-max{
+  color:#374151;
+  font-size:0.72rem;
+  font-weight:600;
+}
+.opacity-panel{
+  position:absolute;
+  right:64px;
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.15);
+  padding:10px 14px;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  z-index:10010;
+  min-width:120px;
+}
+.opacity-panel.visible{
+  display:flex;
+}
+.opacity-panel label{
+  font-size:0.72rem;
+  font-weight:700;
+  color:#6b7280;
+  letter-spacing:0.05em;
+}
+.opacity-panel input[type=range]{
+  width:100px;
+  accent-color:#d12d2d;
+  cursor:pointer;
+}
+.opacity-panel span{
+  font-size:0.75rem;
+  font-weight:700;
+  color:#d12d2d;
+}
+/* ===== PARTAGE ===== */
+#shareToast{
+  position:fixed;
+  bottom:80px;
+  left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:#111827;
+  color:#fff;
+  padding:12px 22px;
+  border-radius:999px;
+  font-size:0.88rem;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .3s ease, transform .3s ease;
+  z-index:99999;
+}
+#shareToast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+#shareToast i{ color:#4ade80; }
+
+/* ===== FILTRE ===== */
+.filter-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.filter-val-label{
+  font-size:0.8rem;
+  color:#6b7280;
+  font-weight:600;
+}
+.filter-val-num{
+  font-size:0.95rem;
+  font-weight:800;
+  color:#d12d2d;
+  flex:1;
+}
+.filter-reset-btn{
+  border:none;
+  background:#fee2e2;
+  color:#d12d2d;
+  border-radius:8px;
+  width:26px;
+  height:26px;
+  cursor:pointer;
+  font-size:0.75rem;
+  font-weight:700;
+  display:grid;
+  place-items:center;
+  transition:background .15s;
+}
+.filter-reset-btn:hover{ background:#fca5a5; }
+.filter-slider{
+  width:100%;
+  accent-color:#d12d2d;
+  cursor:pointer;
+  height:4px;
+}
+.filter-range-labels{
+  display:flex;
+  justify-content:space-between;
+  font-size:0.72rem;
+  color:#9ca3af;
+  margin-top:2px;
+}
+.filter-info{
+  font-size:0.78rem;
+  color:#6b7280;
+  text-align:center;
+  background:#f9fafb;
+  border-radius:10px;
+  padding:6px 10px;
+}
+.filter-info.active{
+  background:#fef2f2;
+  color:#d12d2d;
+  font-weight:700;
+}
+
+/* ===== MODE SWIPE ===== */
+.swipe-label{
+  position:absolute;
+  top:96px;
+  z-index:10000;
+  padding:8px 18px;
+  border-radius:999px;
+  font-size:0.92rem;
+  font-weight:800;
+  letter-spacing:0.04em;
+  color:#fff;
+  display:flex; align-items:center; gap:8px;
+  pointer-events:none;
+  box-shadow:0 6px 20px rgba(0,0,0,0.25);
+  transition:opacity 0.25s;
+}
+.swipe-label.left  { left:20px;  background:linear-gradient(135deg,#ff5c35,#d13a1a); }
+.swipe-label.right { right:84px; background:linear-gradient(135deg,#6366f1,#4338ca); }
+.swipe-label.hidden{ opacity:0; }
+
+#swipeBtn.active{
+  background:#d12d2d;
+  color:#fff;
+}
+#swipeBtn.active i{ color:#fff; }
+
+/* Le slider Leaflet est customisé via JS pour matcher la couleur brand */
+
+/* ===== COUCHES ADDITIONNELLES ===== */
+.overlay-toggle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  border-radius:12px;
+  background:#fff;
+  border:1px solid #eef1f7;
+  cursor:pointer;
+  transition:background .15s, border-color .15s;
+}
+.overlay-toggle:hover{ background:#fafbff; border-color:#d1d5db; }
+.overlay-toggle input[type="checkbox"]{
+  accent-color:#d12d2d;
+  width:16px;
+  height:16px;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.overlay-toggle .ov-icon{
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  display:grid;
+  place-items:center;
+  font-size:0.78rem;
+  flex-shrink:0;
+}
+.overlay-toggle .ov-icon.communes{ background:#dbeafe; color:#1d4ed8; }
+.overlay-toggle .ov-icon.emissions{ background:#fee2e2; color:#d12d2d; }
+.overlay-toggle .ov-icon.dechets{ background:#dcfce7; color:#15803d; }
+.overlay-toggle .ov-label{
+  font-size:0.86rem;
+  font-weight:600;
+  color:#111827;
+  flex:1;
+}
+.overlay-toggle .ov-count{
+  font-size:0.72rem;
+  color:#6b7280;
+  font-weight:600;
+}
+.overlay-toggle .ov-count.empty{ color:#f59e0b; }
+
+/* ===== COMPARAISON ===== */
+#compareOverlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:50000;
+  background:#0d1117;
+  flex-direction:column;
+}
+#compareOverlay.visible{ display:flex; }
+.cmp-header{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:10px 20px;
+  background:#131b34;
+  color:#fff;
+  flex-shrink:0;
+}
+.cmp-title{
+  font-weight:700;
+  font-size:0.95rem;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+.cmp-year-btns{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-left:auto;
+  max-width:60%;
+  justify-content:flex-end;
+  max-height:60px;
+  overflow-y:auto;
+}
+.cmp-yr-btn{
+  border:none;
+  border-radius:999px;
+  padding:4px 10px;
+  background:rgba(255,255,255,0.1);
+  color:#fff;
+  font-size:0.76rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:background .15s;
+  flex-shrink:0;
+}
+.cmp-yr-btn:hover{ background:rgba(255,255,255,0.2); }
+.cmp-yr-btn.active{ background:#d12d2d; }
+#closeCompare{
+  border:none;
+  border-radius:999px;
+  padding:8px 18px;
+  background:rgba(255,255,255,0.1);
+  color:#fff;
+  font-size:0.85rem;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:background .15s;
+  flex-shrink:0;
+}
+#closeCompare:hover{ background:#d12d2d; }
+.cmp-maps{
+  display:flex;
+  flex:1;
+  overflow:hidden;
+  position:relative;
+}
+.cmp-map-wrap{
+  flex:1;
+  position:relative;
+  overflow:hidden;
+}
+.cmp-map-wrap > div[id^="map"]{
+  width:100%;
+  height:100%;
+}
+.cmp-divider{
+  width:4px;
+  background:#d12d2d;
+  flex-shrink:0;
+  position:relative;
+  z-index:10;
+  box-shadow:0 0 12px rgba(209,45,45,0.6);
+}
+.cmp-label{
+  position:absolute;
+  top:14px;
+  z-index:1000;
+  background:rgba(19,27,52,0.92);
+  color:#fff;
+  padding:7px 16px;
+  border-radius:999px;
+  font-size:0.88rem;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+}
+.cmp-label-left{ left:14px; }
+.cmp-label-right{ right:14px; }
+.cmp-legend{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:8px 20px;
+  background:#131b34;
+  color:#fff;
+  font-size:0.78rem;
+  flex-shrink:0;
+}
+.cmp-legend span{
+  display:inline-block;
+  width:22px;
+  height:10px;
+  border-radius:3px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    top: auto;
+    bottom: auto;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 16px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    top: 20px;
+  }
+  #sidebarToggle {
+    display: none;
+  }
+  .compass-rose {
+    display: none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">CH4</div>
+    <div class="title">
+      <strong>CH4 MAROC</strong>
+      <span data-i18n="brand.tagline.short">Géoportail national</span>
+    </div>
+  </div>
+
+  <nav></nav>
+
+  <div class="search-box">
+    <i class="fas fa-search search-icon"></i>
+    <input type="search" id="searchInput" data-i18n-ph="carte.search.ph" placeholder="Rechercher une région ou une commune..." aria-label="Recherche d'une région ou d'une commune" autocomplete="off"/>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <div class="lang-toggle" id="langToggle">
+    <button class="lang-btn active" data-lang="fr">FR</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+  </div>
+</div>
+
+<button id="sidebarToggle" title="Masquer/afficher le panneau"><i class="fas fa-chevron-left"></i></button>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-icon"><i class="fas fa-smog"></i></div>
+    <div class="sidebar-title">
+      <strong data-i18n="carte.sidebar.title">Cartographie CH4 Maroc</strong>
+      <span data-i18n="carte.sidebar.sub">Émissions de méthane CH4 issues des déchets ménagers</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <h3 data-i18n="carte.section.display">Affichage</h3>
+    <div class="sidebar-pill-group">
+      <button class="mode-btn active" data-mode="regions" data-i18n="carte.mode.regions">Régions</button>
+      <button class="mode-btn" data-mode="communes" data-i18n="carte.mode.communes">Communes</button>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <h3 data-i18n="carte.section.params">Paramètres</h3>
+    <div class="field">
+      <label for="model" data-i18n="carte.label.model">Modèle</label>
+      <select id="model">
+        <option value="fod">FOD</option>
+        <option value="tno">TNO</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="year" data-i18n="carte.label.year">Année</label>
+      <select id="year"></select>
+    </div>
+  </div>
+
+  <div class="sidebar-section" id="animationPanel">
+    <h3 data-i18n="carte.section.anim">Animation temporelle</h3>
+    <div class="anim-years"></div>
+    <div class="anim-progress-bar"><div class="anim-progress-fill" id="animFill"></div></div>
+    <div class="anim-controls">
+      <button class="anim-btn" id="animPrev" title="Année précédente"><i class="fas fa-step-backward"></i></button>
+      <button class="anim-btn anim-play" id="animPlay" title="Lancer l'animation"><i class="fas fa-play" id="animPlayIcon"></i></button>
+      <button class="anim-btn" id="animNext" title="Année suivante"><i class="fas fa-step-forward"></i></button>
+      <select id="animSpeed" title="Vitesse">
+        <option value="2000" data-i18n="carte.anim.slow">Lent</option>
+        <option value="1200" selected data-i18n="carte.anim.normal">Normal</option>
+        <option value="600" data-i18n="carte.anim.fast">Rapide</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sidebar-section" id="filterPanel">
+    <h3 data-i18n="carte.section.filter">Filtre par seuil CH₄</h3>
+    <div class="filter-row">
+      <span class="filter-val-label" data-i18n="carte.filter.label">Seuil :</span>
+      <span id="filterValDisplay" class="filter-val-num">0 t/an</span>
+      <button id="filterReset" class="filter-reset-btn" title="Réinitialiser">✕</button>
+    </div>
+    <input type="range" id="filterSlider" min="0" max="100" value="0" step="1" class="filter-slider"/>
+    <div class="filter-range-labels">
+      <span id="filterMin">0</span>
+      <span id="filterMax">—</span>
+    </div>
+    <div class="filter-info" id="filterInfo" data-i18n="carte.filter.info">Toutes les zones affichées</div>
+  </div>
+
+  <div class="sidebar-section sidebar-actions">
+    <button class="action-btn primary" id="refreshBtn" title="Actualiser la carte"><i class="fas fa-sync-alt" id="refreshIcon"></i><span data-i18n="carte.action.refresh">Actualiser</span></button>
+    <button class="action-btn" id="compareBtn" title="Comparer FOD vs TNO (plein écran)"><i class="fas fa-columns"></i><span data-i18n="carte.action.compare">Comparer</span></button>
+    <button class="action-btn" id="swipeBtn" title="Activer le mode swipe FOD/TNO"><i class="fas fa-arrows-left-right"></i><span data-i18n="carte.action.swipe">Swipe</span></button>
+    <div style="position:relative;">
+      <button class="action-btn" id="exportBtn" title="Exporter les données"><i class="fas fa-file-export"></i><span data-i18n="carte.action.export">Exporter</span></button>
+      <div id="exportMenu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;right:0;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);overflow:hidden;z-index:20000;">
+        <button onclick="exportCSV()"     style="width:100%;border:none;background:none;padding:11px 14px;text-align:left;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;color:#111827;"><i class="fas fa-file-csv" style="color:#16a34a;width:16px;"></i>CSV</button>
+        <button onclick="exportGeoJSON()" style="width:100%;border:none;background:none;padding:11px 14px;text-align:left;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;color:#111827;border-top:1px solid #f3f4f6;"><i class="fas fa-map" style="color:#2563eb;width:16px;"></i>GeoJSON</button>
+        <button onclick="exportSHP()"     style="width:100%;border:none;background:none;padding:11px 14px;text-align:left;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;color:#111827;border-top:1px solid #f3f4f6;"><i class="fas fa-globe" style="color:#0891b2;width:16px;"></i>Shapefile (.zip)</button>
+        <button onclick="exportPNG()"     style="width:100%;border:none;background:none;padding:11px 14px;text-align:left;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;color:#111827;border-top:1px solid #f3f4f6;"><i class="fas fa-image" style="color:#7c3aed;width:16px;"></i>PNG</button>
+        <button onclick="exportPDF()"     style="width:100%;border:none;background:none;padding:11px 14px;text-align:left;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;color:#111827;border-top:1px solid #f3f4f6;"><i class="fas fa-file-pdf" style="color:#d12d2d;width:16px;"></i>PDF</button>
+      </div>
+    </div>
+  </div>
+
+</aside>
+
+<div id="map"></div>
+
+<!-- ======= COMPARAISON OVERLAY ======= -->
+<div id="compareOverlay">
+  <div class="cmp-header">
+    <div class="cmp-title"><i class="fas fa-columns"></i> <span data-i18n="carte.cmp.title">Comparaison FOD vs TNO</span> — <span id="cmpYearLabel">2024</span></div>
+    <div class="cmp-year-btns"></div>
+    <button id="closeCompare"><i class="fas fa-times"></i> <span data-i18n="carte.cmp.close">Fermer</span></button>
+  </div>
+  <div class="cmp-maps">
+    <div class="cmp-map-wrap">
+      <div class="cmp-label cmp-label-left"><i class="fas fa-flask"></i> FOD</div>
+      <div id="mapFOD"></div>
+    </div>
+    <div class="cmp-divider"></div>
+    <div class="cmp-map-wrap">
+      <div class="cmp-label cmp-label-right"><i class="fas fa-vial"></i> TNO</div>
+      <div id="mapTNO"></div>
+    </div>
+  </div>
+  <div class="cmp-legend" id="cmpLegend"></div>
+</div>
+
+<div class="legend-bar" id="legendBar">
+  <span class="legend-label">CH₄</span>
+  <span class="legend-min" id="legendMin">—</span>
+  <div class="legend-swatches" id="legendSwatches"></div>
+  <span class="legend-max" id="legendMax">—</span>
+  <span class="legend-unit" data-i18n="carte.legend.unit">t/an</span>
+</div>
+
+<div class="map-toolbar" id="mapToolbar">
+  <button data-i18n-title="carte.tooltip.zoomin" title="Zoom avant" data-action="zoom-in"><i class="fas fa-plus"></i></button>
+  <button data-i18n-title="carte.tooltip.zoomout" title="Zoom arrière" data-action="zoom-out"><i class="fas fa-minus"></i></button>
+  <div class="separator"></div>
+  <button data-i18n-title="carte.tooltip.drag" title="Activer/désactiver le déplacement" data-action="toggle-drag"><i class="fas fa-hand"></i></button>
+  <button data-i18n-title="carte.tooltip.info" title="Info méthane / CH4" data-action="show-info"><i class="fas fa-thermometer-half"></i></button>
+  <button data-i18n-title="carte.tooltip.satellite" title="Données satellitaires" data-action="toggle-satellite"><i class="fas fa-satellite"></i></button>
+  <div class="separator"></div>
+  <div style="position:relative;display:flex;align-items:center;">
+    <button data-i18n-title="carte.tooltip.opacity" title="Opacité des couches" data-action="toggle-opacity" id="opacityBtn"><i class="fas fa-adjust"></i></button>
+    <div class="opacity-panel" id="opacityPanel">
+      <label data-i18n="carte.opacity.label">OPACITÉ</label>
+      <input type="range" id="opacitySlider" min="0" max="100" value="100"/>
+      <span id="opacityValue">100%</span>
+    </div>
+  </div>
+  <button data-i18n-title="carte.tooltip.home" title="Centrer sur le Maroc" data-action="zoom-home"><i class="fas fa-map-pin"></i></button>
+  <button data-i18n-title="carte.tooltip.style" title="Cartographie" data-action="toggle-style"><i class="fas fa-map-marked-alt"></i></button>
+  <button data-i18n-title="carte.tooltip.grid" title="Zones à risque" data-action="toggle-grid"><i class="fas fa-th"></i></button>
+  <div class="separator"></div>
+  <button data-i18n-title="carte.tooltip.share" title="Partager la vue" data-action="share-view"><i class="fas fa-share-alt"></i></button>
+</div>
+
+<!-- Toast partage -->
+<div id="shareToast">
+  <i class="fas fa-check-circle"></i> <span data-i18n="carte.share.copied">Lien copié !</span>
+</div>
+
+<div class="compass-rose">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <!-- Disque blanc -->
+    <circle cx="50" cy="50" r="46" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="#f1f5f9" stroke-width="1"/>
+    <!-- Pointes intercardinalles (NE, SE, SW, NW) — plus courtes, grises -->
+    <polygon points="50,32 52,46 50,50 48,46" fill="#d1d5db" transform="rotate(45,50,50)"/>
+    <polygon points="50,32 52,46 50,50 48,46" fill="#d1d5db" transform="rotate(135,50,50)"/>
+    <polygon points="50,32 52,46 50,50 48,46" fill="#d1d5db" transform="rotate(225,50,50)"/>
+    <polygon points="50,32 52,46 50,50 48,46" fill="#d1d5db" transform="rotate(315,50,50)"/>
+    <!-- Pointes cardinales S, E, O — anthracite -->
+    <polygon points="50,10 53,44 50,50 47,44" fill="#374151" transform="rotate(180,50,50)"/>
+    <polygon points="50,10 53,44 50,50 47,44" fill="#374151" transform="rotate(90,50,50)"/>
+    <polygon points="50,10 53,44 50,50 47,44" fill="#374151" transform="rotate(270,50,50)"/>
+    <!-- Pointe N — rouge, dessinée en dernier (au-dessus) -->
+    <polygon points="50,10 53,44 50,50 47,44" fill="#ef4444"/>
+    <!-- Centre -->
+    <circle cx="50" cy="50" r="5.5" fill="white" stroke="#374151" stroke-width="1.5"/>
+    <circle cx="50" cy="50" r="2.5" fill="#374151"/>
+    <!-- Labels -->
+    <text x="50" y="2"  text-anchor="middle" dominant-baseline="hanging" font-size="9" font-weight="800" fill="#ef4444" font-family="Arial,sans-serif">N</text>
+    <text x="50" y="98" text-anchor="middle" dominant-baseline="auto"    font-size="8" font-weight="600" fill="#9ca3af" font-family="Arial,sans-serif">S</text>
+    <text x="97" y="54" text-anchor="end"    dominant-baseline="middle"  font-size="8" font-weight="600" fill="#9ca3af" font-family="Arial,sans-serif">E</text>
+    <text x="3"  y="54" text-anchor="start"  dominant-baseline="middle"  font-size="8" font-weight="600" fill="#9ca3af" font-family="Arial,sans-serif">O</text>
+  </svg>
+</div>
+
+<!-- Labels du mode Swipe -->
+<div class="swipe-label left hidden" id="swipeLabelLeft"><i class="fas fa-flask"></i> FOD</div>
+<div class="swipe-label right hidden" id="swipeLabelRight"><i class="fas fa-vial"></i> TNO</div>
+
+<div class="coordinate-bubble" id="coordinateBubble">
+  <div class="icon"><i class="fas fa-location-crosshairs"></i></div>
+  <div class="coords">
+    <strong data-i18n="carte.coord.position">Position</strong>
+    <span id="coordLat">31.5000° N</span>
+    <span id="coordLng">7.0000° W</span>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/lib/leaflet-side-by-side.js"></script>
+<script src="js/common.js"></script>
+
+<script>
+// ================= MAP =================
+const map = L.map("map", { zoomControl: false }).setView([31.7917, -7.0926], 6);
+
+// Base maps
+const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
+const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+  attribution: 'Esri'
+});
+const labelsLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
+  attribution: 'Esri Labels',
+  zIndex: 10
+});
+
+// Default to Satellite + Labels
+satelliteLayer.addTo(map);
+labelsLayer.addTo(map);
+
+// Add layer control
+const baseMaps = {
+  "Satellite": satelliteLayer,
+  "OpenStreetMap": osmLayer
+};
+
+// layer control supprimé
+
+// compass rose rendered as standalone HTML div (see HTML below)
+
+// ================= VARIABLES =================
+let currentMode="regions";
+let currentYear="2024";
+let currentModel="fod";
+
+let REGIONS=null;
+let COMMUNES=null;
+let CH4={};
+let layer=null;
+let breaks=[];
+let dragEnabled=true;
+let gridLayer=null;
+let layerStyleMode='fill';
+
+// ================= ANNÉES DISPONIBLES =================
+const YEARS_REGIONS = ['1994','2004','2014','2024',
+  '2025','2026','2027','2028','2029','2030',
+  '2031','2032','2033','2034','2035','2036',
+  '2037','2038','2039','2040'];
+const YEARS_COMMUNES = ['1994','2004','2014','2024'];
+
+function getAvailableYears(){
+  return currentMode === 'regions' ? YEARS_REGIONS : YEARS_COMMUNES;
+}
+
+function renderYearSelect(){
+  const sel = document.getElementById('year');
+  const years = getAvailableYears();
+  sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  if(!years.includes(currentYear)) currentYear = years[years.length - 1];
+  sel.value = currentYear;
+}
+
+function renderAnimDots(){
+  const wrap = document.querySelector('.anim-years');
+  if(!wrap) return;
+  const years = getAvailableYears();
+  wrap.innerHTML = years.map(y =>
+    `<span class="anim-year-dot" data-y="${y}">${y}</span>`
+  ).join('');
+}
+
+function renderCmpYearBtns(){
+  const wrap = document.querySelector('.cmp-year-btns');
+  if(!wrap) return;
+  const years = getAvailableYears();
+  wrap.innerHTML = years.map(y =>
+    `<button class="cmp-yr-btn${y===cmpYear?' active':''}" data-y="${y}">${y}</button>`
+  ).join('');
+}
+
+// ================= NORMALISATION =================
+function slug(s){
+  return s.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]/g,"-")
+    .replace(/-+/g,"-")
+    .replace(/^-|-$/g,"");
+}
+
+function regionKey(name){
+  return "region-de-" + slug(
+    name
+      .replace(/^r[ée]gion\s+de\s+/i,"")
+      .replace(/^l['’]\s*/i,"l")
+      .replace(/['’]/g,"")
+  );
+}
+
+// ================= COULEUR =================
+function getColor(v){
+  if(!breaks.length) return "#ccc";
+
+  return v > breaks[8] ? "#800026" :
+         v > breaks[7] ? "#BD0026" :
+         v > breaks[6] ? "#E31A1C" :
+         v > breaks[5] ? "#FC4E2A" :
+         v > breaks[4] ? "#FD8D3C" :
+         v > breaks[3] ? "#FEB24C" :
+         v > breaks[2] ? "#FED976" :
+         v > breaks[1] ? "#FFEDA0" :
+         v > breaks[0] ? "#FFF7BC" :
+                         "#FFFFE5";
+}
+
+// ================= BREAKS =================
+function computeBreaks(values){
+  values = values.filter(v=>v>0).sort((a,b)=>a-b);
+  let n = values.length;
+
+  breaks = [
+    values[Math.floor(n*0.1)],
+    values[Math.floor(n*0.2)],
+    values[Math.floor(n*0.3)],
+    values[Math.floor(n*0.4)],
+    values[Math.floor(n*0.5)],
+    values[Math.floor(n*0.6)],
+    values[Math.floor(n*0.7)],
+    values[Math.floor(n*0.8)],
+    values[Math.floor(n*0.9)]
+  ];
+}
+
+// ================= LEGEND =================
+const legend = {
+  update: function(){
+    const swatches = document.getElementById("legendSwatches");
+    const legendMin = document.getElementById("legendMin");
+    const legendMax = document.getElementById("legendMax");
+    if(!swatches) return;
+
+    if(!breaks.length){
+      swatches.innerHTML="";
+      legendMin.textContent="—";
+      legendMax.textContent="—";
+      return;
+    }
+
+    const colors = [
+      "#FFFFE5","#FFF7BC","#FFEDA0","#FED976",
+      "#FEB24C","#FD8D3C","#FC4E2A","#E31A1C","#BD0026","#800026"
+    ];
+
+    swatches.innerHTML = colors.map(c=>
+      `<span style="background:${c}" title="${c}"></span>`
+    ).join("");
+
+    legendMin.textContent = "0";
+    legendMax.textContent = breaks[8] ? `>${breaks[8].toFixed(0)}` : "";
+  }
+};
+
+// ================= LOAD =================
+async function loadGeo(){
+  if(currentMode==="regions"){
+    if(!REGIONS){
+      REGIONS=await fetch("data/regions.geojson").then(r=>r.json());
+    }
+    return REGIONS;
+  }else{
+    if(!COMMUNES){
+      COMMUNES=await fetch("data/communes.geojson").then(r=>r.json());
+    }
+    return COMMUNES;
+  }
+}
+
+async function loadData(){
+  let url=`data/ch4_${currentModel}_${currentYear}_${currentMode==="regions"?"region":"commune"}.json`;
+  try{
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    CH4 = await r.json();
+  }catch(err){
+    console.warn(`Données indisponibles pour ${url}`, err);
+    CH4 = {};
+  }
+}
+
+// ================= VALUE =================
+function getValue(name){
+  if(currentMode === "regions"){
+    // Tolère deux formats de clés selon le fichier de données :
+    //  - "region-de-..." (fichiers 1994 → 2024)
+    //  - "..." direct, sans préfixe (fichiers 2025 → 2040)
+    const cleanName = name.replace(/^r[ée]gion\s+de\s+/i,"");
+    const candidates = [
+      regionKey(name),                                    // region-de-loriental
+      slug(cleanName),                                    // l-oriental
+      slug(cleanName.replace(/['']/g,""))                 // loriental
+    ];
+    for(const k of candidates){
+      if(CH4[k] != null) return CH4[k];
+    }
+    return 0;
+  }
+  return CH4[slug(name)] || 0;
+}
+
+// ================= ÉQUIVALENCES CLIMAT =================
+// Facteurs (sources GIEC AR6, ADEME, OACI)
+const GWP100 = 28;          // PRG 100 ans du CH4 (IPCC AR6, 2021)
+const T_CO2_VOITURE   = 2.5;   // t CO2 / voiture moyenne / an
+const T_CO2_VOL_CDG   = 0.3;   // t CO2 / vol Casa-Paris / passager
+const T_CO2_FOYER     = 1.5;   // t CO2 / foyer marocain / an (chauffage+élec)
+const T_CO2_ARBRE     = 0.025; // t CO2 absorbé / arbre / an
+
+function computeEquivalences(ch4_t){
+  if (!isFinite(ch4_t) || ch4_t <= 0) return null;
+  const co2eq = ch4_t * GWP100;
+  return {
+    ch4:      ch4_t,
+    co2eq:    co2eq,
+    voitures: Math.round(co2eq / T_CO2_VOITURE),
+    vols:     Math.round(co2eq / T_CO2_VOL_CDG),
+    foyers:   Math.round(co2eq / T_CO2_FOYER),
+    arbres:   Math.round(co2eq / T_CO2_ARBRE),
+  };
+}
+
+function fmtFr(n, dec){
+  if (n == null) return '—';
+  return Number(n).toLocaleString('fr-FR', {minimumFractionDigits: dec||0, maximumFractionDigits: dec||0});
+}
+
+// Met à jour la sidebar "Impact climat" avec le total national courant
+function updateImpactPanel(){
+  // Total national = somme des valeurs des features actuellement chargées
+  const geo = currentMode === 'regions' ? REGIONS : COMMUNES;
+  if (!geo) return;
+  const nameKey = currentMode === 'regions' ? 'nom_region' : 'nom_fr';
+  let total = 0;
+  for (const f of geo.features) total += getValue(f.properties[nameKey]);
+
+  const eq = computeEquivalences(total);
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  if (!eq) { set('impCo2eq','—'); set('impCars','—'); set('impFlights','—'); set('impTrees','—'); return; }
+  set('impCo2eq', fmtFr(eq.co2eq, 0));
+  set('impCars',  fmtFr(eq.voitures, 0));
+  set('impFlights', fmtFr(eq.vols, 0));
+  set('impTrees', fmtFr(eq.arbres, 0));
+}
+
+// ================= STYLE =================
+function style(feature){
+  let name=currentMode==="regions"
+    ? feature.properties.nom_region
+    : feature.properties.nom_fr;
+
+  let v=getValue(name);
+
+  return{
+    fillColor:getColor(v),
+    weight:1,
+    color: layerStyleMode==='fill' ? "#fff" : "#d12d2d",
+    fillOpacity: layerStyleMode==='fill' ? 0.8 : 0,
+    opacity: layerStyleMode==='fill' ? 1 : 0.7
+  };
+}
+
+// ================= POPUP =================
+function onEach(feature,layer){
+  let name=currentMode==="regions"
+    ? feature.properties.nom_region
+    : feature.properties.nom_fr;
+
+  let v=getValue(name);
+
+  const unit = (window.t ? window.t('carte.legend.unit', 't/an') : 't/an');
+  const eq   = computeEquivalences(v);
+  let popupHtml = `
+    <b>${name}</b><br>
+    <span style="color:#6b7280;font-size:0.82rem;">${currentModel.toUpperCase()} · ${currentYear}</span><br>
+    <span style="font-size:1.05rem;color:#d12d2d;font-weight:700;">CH₄ : ${fmtFr(v, 2)} ${unit}</span>
+  `;
+  if (eq) {
+    const eqTitle = window.t ? window.t('carte.popup.equiv', 'Équivalent climat') : 'Équivalent climat';
+    const labCo2  = window.t ? window.t('carte.popup.co2eq',    'CO₂eq')      : 'CO₂eq';
+    const labCar  = window.t ? window.t('carte.popup.cars',     'voitures/an'): 'voitures/an';
+    const labFlt  = window.t ? window.t('carte.popup.flights',  'vols Casa→Paris') : 'vols Casa→Paris';
+    const labTree = window.t ? window.t('carte.popup.trees',    'arbres à planter') : 'arbres à planter';
+    popupHtml += `
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0 6px 0;">
+    <div style="font-size:0.74rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.04em;font-weight:700;margin-bottom:4px;">${eqTitle}</div>
+    <div style="font-size:0.82rem;line-height:1.55;color:#111827;">
+      🌡️ <b>${fmtFr(eq.co2eq, 0)}</b> t ${labCo2}<br>
+      🚗 ${fmtFr(eq.voitures, 0)} ${labCar}<br>
+      ✈️ ${fmtFr(eq.vols, 0)} ${labFlt}<br>
+      🌳 ${fmtFr(eq.arbres, 0)} ${labTree}
+    </div>`;
+  }
+  layer.bindPopup(popupHtml);
+}
+
+// ================= DRAW =================
+async function draw(){
+
+  let geo=await loadGeo();
+  await loadData();
+
+  // Ne calculer les breaks que sur les régions/communes effectivement affichées
+  // (évite que des clés agrégées comme "total-maroc" écrasent la palette)
+  const nameKey = currentMode==="regions" ? "nom_region" : "nom_fr";
+  let values = geo.features.map(f => getValue(f.properties[nameKey]));
+  computeBreaks(values);
+  legend.update();
+
+  if(layer) map.removeLayer(layer);
+
+  layer=L.geoJSON(geo,{style:style,onEachFeature:onEach}).addTo(map);
+
+  map.fitBounds(layer.getBounds());
+
+  if(gridLayer){
+    map.removeLayer(gridLayer);
+    createGrid();
+  }
+
+  updateStyles();
+  updateImpactPanel();
+}
+
+function createGrid(){
+  if(gridLayer){
+    map.removeLayer(gridLayer);
+  }
+  const bounds = map.getBounds();
+  const step = 2;
+  const south = Math.floor(bounds.getSouth()/step)*step;
+  const north = Math.ceil(bounds.getNorth()/step)*step;
+  const west = Math.floor(bounds.getWest()/step)*step;
+  const east = Math.ceil(bounds.getEast()/step)*step;
+  const lines=[];
+
+  for(let lat=south; lat<=north; lat+=step){
+    lines.push(L.polyline([[lat, west],[lat, east]], {color:'#999', weight:1, opacity:0.25, interactive:false}));
+  }
+  for(let lng=west; lng<=east; lng+=step){
+    lines.push(L.polyline([[south, lng],[north, lng]], {color:'#999', weight:1, opacity:0.25, interactive:false}));
+  }
+
+  gridLayer = L.layerGroup(lines).addTo(map);
+}
+
+function updateStyles(){
+  if(!layer) return;
+  layer.setStyle(feature=>({
+    fillColor:getColor(getValue(currentMode==='regions' ? feature.properties.nom_region : feature.properties.nom_fr)),
+    weight:1,
+    color: layerStyleMode==='fill' ? '#fff' : '#d12d2d',
+    fillOpacity: layerStyleMode==='fill' ? 0.8 : 0,
+    opacity: layerStyleMode==='fill' ? 1 : 0.7
+  }));
+}
+
+function setToolbarActive(action, active){
+  const btn=document.querySelector(`[data-action="${action}"]`);
+  if(btn){
+    btn.classList.toggle('active', active);
+  }
+}
+
+function handleToolbarClick(action){
+  switch(action){
+    case 'zoom-in':
+      map.zoomIn();
+      break;
+    case 'zoom-out':
+      map.zoomOut();
+      break;
+    case 'toggle-drag':
+      dragEnabled = !dragEnabled;
+      if(dragEnabled){
+        map.dragging.enable();
+        map.scrollWheelZoom.enable();
+      } else {
+        map.dragging.disable();
+        map.scrollWheelZoom.disable();
+      }
+      setToolbarActive(action, !dragEnabled);
+      break;
+    case 'show-info':
+      alert('Géoportail CH4 Maroc\n\n+ / - : zoom\n🖐 : activer/désactiver le déplacement\n📡 : données satellitaires\n📍 : recentrer sur le Maroc\n🗺️ : basculer cartographie\n⚠️ : zones à risque\n🌡️ : information méthane / CH4');
+      break;
+    case 'toggle-satellite':
+      if(map.hasLayer(satelliteLayer)){
+        map.removeLayer(satelliteLayer);
+        map.removeLayer(labelsLayer);
+        osmLayer.addTo(map);
+      } else {
+        if(map.hasLayer(osmLayer)) map.removeLayer(osmLayer);
+        satelliteLayer.addTo(map);
+        labelsLayer.addTo(map);
+      }
+      break;
+    case 'zoom-home':
+      map.setView([31.5, -7], 6);
+      break;
+    case 'toggle-style':
+      layerStyleMode = layerStyleMode==='fill' ? 'outline' : 'fill';
+      updateStyles();
+      setToolbarActive(action, layerStyleMode==='outline');
+      break;
+    case 'toggle-grid':
+      if(gridLayer){
+        map.removeLayer(gridLayer);
+        gridLayer = null;
+        setToolbarActive(action, false);
+      } else {
+        createGrid();
+        setToolbarActive(action, true);
+      }
+      break;
+    case 'share-view':
+      shareView();
+      break;
+  }
+}
+
+document.querySelectorAll('#mapToolbar button').forEach(btn=>{
+  btn.addEventListener('click', ()=> handleToolbarClick(btn.dataset.action));
+});
+
+function formatCoord(value, isLat){
+  const abs = Math.abs(value);
+  const degrees = abs.toFixed(4);
+  const direction = isLat ? (value >= 0 ? 'N' : 'S') : (value >= 0 ? 'E' : 'W');
+  return `${degrees}° ${direction}`;
+}
+
+map.on('mousemove', e=>{
+  document.getElementById('coordLat').textContent = formatCoord(e.latlng.lat, true);
+  document.getElementById('coordLng').textContent = formatCoord(e.latlng.lng, false);
+});
+
+map.on('moveend', ()=>{
+  if(gridLayer){
+    createGrid();
+  }
+});
+
+// ================= EVENTS =================
+document.querySelectorAll(".mode-btn").forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll(".mode-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    currentMode=btn.dataset.mode;
+    renderYearSelect();
+    renderAnimDots();
+    animIndex = getAvailableYears().indexOf(currentYear);
+    if(animIndex < 0) animIndex = 0;
+    animSyncUI();
+    draw();
+  };
+});
+
+const navLinks=document.querySelectorAll('.topbar nav a');
+navLinks.forEach(link=>{
+  link.addEventListener('click', e=>{
+    e.preventDefault();
+    navLinks.forEach(l=>l.classList.remove('active'));
+    link.classList.add('active');
+  });
+});
+
+document.getElementById("model").onchange=e=>{
+  currentModel=e.target.value;
+  draw();
+};
+
+document.getElementById("year").onchange=e=>{
+  currentYear=e.target.value;
+  draw();
+};
+
+// ================= INIT =================
+restoreFromURL();
+renderYearSelect();
+renderAnimDots();
+draw();
+
+// ================= ANIMATION =================
+let animIndex    = getAvailableYears().indexOf(currentYear);
+let animTimer    = null;
+let animPlaying  = false;
+
+const animPlayBtn  = document.getElementById('animPlay');
+const animPlayIcon = document.getElementById('animPlayIcon');
+const animFill     = document.getElementById('animFill');
+const animYearsWrap= document.querySelector('.anim-years');
+const animSpeedSel = document.getElementById('animSpeed');
+
+function animSyncUI(){
+  const years = getAvailableYears();
+  const dots = animYearsWrap.querySelectorAll('.anim-year-dot');
+  dots.forEach((d,i) => d.classList.toggle('active', i === animIndex));
+  animFill.style.width = years.length ? ((animIndex+1) / years.length * 100) + '%' : '0%';
+}
+
+function animSetYear(idx){
+  const years = getAvailableYears();
+  if(idx < 0 || idx >= years.length) return;
+  animIndex = idx;
+  currentYear = years[idx];
+  document.getElementById('year').value = currentYear;
+  animSyncUI();
+  draw();
+}
+
+function animStep(){
+  const years = getAvailableYears();
+  const next = (animIndex + 1) % years.length;
+  animSetYear(next);
+  if(next === 0 && animPlaying){
+    animStop();
+    return;
+  }
+}
+
+function animPlay(){
+  const years = getAvailableYears();
+  animPlaying = true;
+  animPlayIcon.className = 'fas fa-pause';
+  const speed = parseInt(animSpeedSel.value);
+  if(animIndex === years.length - 1) animSetYear(0);
+  animTimer = setInterval(animStep, speed);
+}
+
+function animStop(){
+  animPlaying = false;
+  animPlayIcon.className = 'fas fa-play';
+  clearInterval(animTimer);
+  animTimer = null;
+}
+
+animPlayBtn.addEventListener('click', () => {
+  animPlaying ? animStop() : animPlay();
+});
+
+document.getElementById('animPrev').addEventListener('click', () => {
+  animStop();
+  const n = getAvailableYears().length;
+  animSetYear((animIndex - 1 + n) % n);
+});
+
+document.getElementById('animNext').addEventListener('click', () => {
+  animStop();
+  const n = getAvailableYears().length;
+  animSetYear((animIndex + 1) % n);
+});
+
+// Délégation : les dots sont régénérés dynamiquement
+animYearsWrap.addEventListener('click', e => {
+  const dot = e.target.closest('.anim-year-dot');
+  if(!dot) return;
+  const idx = getAvailableYears().indexOf(dot.dataset.y);
+  if(idx >= 0){ animStop(); animSetYear(idx); }
+});
+
+animSpeedSel.addEventListener('change', () => {
+  if(animPlaying){ animStop(); animPlay(); }
+});
+
+document.getElementById('year').addEventListener('change', e => {
+  const idx = getAvailableYears().indexOf(e.target.value);
+  if(idx >= 0){ animStop(); animIndex = idx; animSyncUI(); }
+});
+
+// sync UI sans redessiner (draw() déjà appelé au init)
+animSyncUI();
+
+// ================= PARTAGE DE VUE =================
+function shareView(){
+  const c   = map.getCenter();
+  const url = new URL(window.location.href.split('?')[0]);
+  url.searchParams.set('lat',   c.lat.toFixed(5));
+  url.searchParams.set('lng',   c.lng.toFixed(5));
+  url.searchParams.set('zoom',  map.getZoom());
+  url.searchParams.set('model', currentModel);
+  url.searchParams.set('year',  currentYear);
+  url.searchParams.set('mode',  currentMode);
+
+  navigator.clipboard.writeText(url.toString()).then(() => {
+    const toast = document.getElementById('shareToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }).catch(() => {
+    prompt('Copiez ce lien :', url.toString());
+  });
+}
+
+function restoreFromURL(){
+  const p = new URLSearchParams(window.location.search);
+  if(!p.has('lat')) return false;
+
+  const lat   = parseFloat(p.get('lat'));
+  const lng   = parseFloat(p.get('lng'));
+  const zoom  = parseInt(p.get('zoom'));
+  const model = p.get('model');
+  const year  = p.get('year');
+  const mode  = p.get('mode');
+
+  if(!isNaN(lat) && !isNaN(lng)) map.setView([lat, lng], isNaN(zoom) ? 6 : zoom);
+  if(model && ['fod','tno'].includes(model)){
+    currentModel = model;
+    document.getElementById('model').value = model;
+  }
+  if(mode && ['regions','communes'].includes(mode)){
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+  }
+  if(year && getAvailableYears().includes(year)){
+    currentYear = year;
+    const idx = getAvailableYears().indexOf(year);
+    if(idx >= 0) animIndex = idx;
+  }
+  return true;
+}
+
+// ================= FILTRE PAR SEUIL =================
+let filterThreshold = 0;
+let filterMax       = 0;
+
+const filterSlider     = document.getElementById('filterSlider');
+const filterValDisplay = document.getElementById('filterValDisplay');
+const filterInfo       = document.getElementById('filterInfo');
+const filterMaxEl      = document.getElementById('filterMax');
+const filterMinEl      = document.getElementById('filterMin');
+
+function updateFilterRange(){
+  const geo = currentMode === 'regions' ? REGIONS : COMMUNES;
+  if(!geo) return;
+  const nameKey = currentMode === 'regions' ? 'nom_region' : 'nom_fr';
+  const vals = geo.features.map(f => getValue(f.properties[nameKey])).filter(v => v > 0);
+  if(!vals.length) return;
+  filterMax = Math.ceil(Math.max(...vals));
+  filterSlider.max   = filterMax;
+  filterSlider.value = filterThreshold;
+  filterMaxEl.textContent = filterMax.toFixed(0) + ' t/an';
+  filterMinEl.textContent = '0';
+}
+
+function applyFilter(){
+  if(!layer) return;
+  const threshold = filterThreshold;
+  const total     = Object.values(CH4).filter(v => v > 0).length;
+  let hidden      = 0;
+
+  layer.eachLayer(l => {
+    const p = l.feature && l.feature.properties;
+    if(!p) return;
+    const name = currentMode === 'regions' ? p.nom_region : p.nom_fr;
+    const v    = getValue(name);
+
+    if(v < threshold && threshold > 0){
+      l.setStyle({ fillColor:'#d1d5db', fillOpacity:0.35, color:'#e5e7eb', weight:1 });
+      hidden++;
+    } else {
+      l.setStyle(style(l.feature));
+    }
+  });
+
+  filterValDisplay.textContent = threshold.toFixed(0) + ' t/an';
+
+  if(threshold === 0){
+    filterInfo.textContent = 'Toutes les zones affichées';
+    filterInfo.classList.remove('active');
+  } else {
+    filterInfo.textContent = `${hidden} zone${hidden>1?'s':''} masquée${hidden>1?'s':''} sur ${total}`;
+    filterInfo.classList.toggle('active', hidden > 0);
+  }
+}
+
+filterSlider.addEventListener('input', () => {
+  filterThreshold = parseFloat(filterSlider.value);
+  applyFilter();
+});
+
+document.getElementById('filterReset').addEventListener('click', () => {
+  filterThreshold = 0;
+  filterSlider.value = 0;
+  applyFilter();
+});
+
+// Mise à jour de la plage après chaque draw
+const _origDraw = draw;
+draw = async function(){
+  await _origDraw();
+  updateFilterRange();
+  if(filterThreshold > 0) applyFilter();
+};
+
+// ================= COUCHES ADDITIONNELLES =================
+const OVERLAY_CONFIG = {
+  communes_maroc: {
+    file: 'data/communes_maroc.geojson',
+    label: 'Commune',
+    style: { color:'#1d4ed8', weight:1, fillColor:'#3b82f6', fillOpacity:0.15 },
+    pointColor: '#1d4ed8'
+  },
+  emissions_ch4: {
+    file: 'data/emissions_ch4.geojson',
+    label: 'Émission CH₄',
+    style: { color:'#d12d2d', weight:1.5, fillColor:'#fca5a5', fillOpacity:0.4 },
+    pointColor: '#d12d2d'
+  },
+  sites_dechets: {
+    file: 'data/sites_dechets.geojson',
+    label: 'Site de déchets',
+    style: { color:'#15803d', weight:1.5, fillColor:'#86efac', fillOpacity:0.4 },
+    pointColor: '#15803d'
+  }
+};
+
+const overlayCache = {};   // GeoJSON brut chargé
+const overlayLayers = {};  // Couches Leaflet ajoutées
+
+function buildPopup(label, props){
+  if(!props || !Object.keys(props).length) return `<b>${label}</b><br><em>Aucune propriété</em>`;
+  const rows = Object.entries(props)
+    .slice(0, 12)
+    .map(([k,v]) => `<tr><td style="padding:2px 6px 2px 0;color:#6b7280;font-size:0.78rem;">${k}</td><td style="font-size:0.82rem;color:#111827;font-weight:600;">${v}</td></tr>`)
+    .join('');
+  return `<b>${label}</b><table style="margin-top:6px;border-collapse:collapse;">${rows}</table>`;
+}
+
+async function loadOverlay(key){
+  if(overlayCache[key]) return overlayCache[key];
+  const cfg = OVERLAY_CONFIG[key];
+  try{
+    const data = await fetch(cfg.file).then(r => {
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+    overlayCache[key] = data;
+    return data;
+  }catch(err){
+    console.error(`Erreur chargement ${cfg.file}:`, err);
+    return null;
+  }
+}
+
+function updateOverlayCount(key, data){
+  const el = document.getElementById('cnt_' + key);
+  if(!el) return;
+  const n = (data && data.features) ? data.features.length : 0;
+  el.textContent = n ? `${n} objet${n>1?'s':''}` : 'vide';
+  el.classList.toggle('empty', n === 0);
+}
+
+async function toggleOverlay(key, on){
+  if(on){
+    const data = await loadOverlay(key);
+    updateOverlayCount(key, data);
+    if(!data || !data.features || !data.features.length){
+      // Fichier vide ou erreur : on laisse la case cochée mais rien ne s'affiche
+      return;
+    }
+    const cfg = OVERLAY_CONFIG[key];
+    const layer = L.geoJSON(data, {
+      style: cfg.style,
+      pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+        radius: 6,
+        fillColor: cfg.pointColor,
+        color: '#fff',
+        weight: 1.5,
+        opacity: 1,
+        fillOpacity: 0.9
+      }),
+      onEachFeature: (feature, lyr) => {
+        lyr.bindPopup(buildPopup(cfg.label, feature.properties));
+      }
+    }).addTo(map);
+    overlayLayers[key] = layer;
+  } else {
+    if(overlayLayers[key]){
+      map.removeLayer(overlayLayers[key]);
+      delete overlayLayers[key];
+    }
+  }
+}
+
+// Initialisation : compteurs au chargement + binding des cases
+document.querySelectorAll('#overlayPanel input[type="checkbox"]').forEach(cb => {
+  const key = cb.dataset.overlay;
+  // Pré-charge silencieusement pour afficher le nombre d'objets
+  loadOverlay(key).then(data => updateOverlayCount(key, data));
+  cb.addEventListener('change', () => toggleOverlay(key, cb.checked));
+});
+
+// ================= COMPARAISON FOD vs TNO =================
+let cmpMapFOD = null, cmpMapTNO = null;
+let cmpSyncing = false;
+let cmpYear = currentYear;
+
+const CMP_COLORS = ["#FFFFE5","#FFF7BC","#FFEDA0","#FED976","#FEB24C","#FD8D3C","#FC4E2A","#E31A1C","#BD0026","#800026"];
+
+async function loadCmpData(model, year, mode){
+  const url = `data/ch4_${model}_${year}_${mode === 'regions' ? 'region' : 'commune'}.json`;
+  return fetch(url).then(r=>r.json());
+}
+
+function cmpGetColor(v, brks){
+  if(!brks.length) return "#ccc";
+  return v > brks[8] ? "#800026" : v > brks[7] ? "#BD0026" : v > brks[6] ? "#E31A1C" :
+         v > brks[5] ? "#FC4E2A" : v > brks[4] ? "#FD8D3C" : v > brks[3] ? "#FEB24C" :
+         v > brks[2] ? "#FED976" : v > brks[1] ? "#FFEDA0" : v > brks[0] ? "#FFF7BC" : "#FFFFE5";
+}
+
+function cmpLookup(ch4, name, mode){
+  if(mode === 'regions'){
+    const cleanName = name.replace(/^r[ée]gion\s+de\s+/i,"");
+    const candidates = [
+      regionKey(name),
+      slug(cleanName),
+      slug(cleanName.replace(/['']/g,""))
+    ];
+    for(const k of candidates){
+      if(ch4[k] != null) return ch4[k];
+    }
+    return 0;
+  }
+  return ch4[slug(name)] || 0;
+}
+
+function cmpComputeBreaks(ch4, geo, mode){
+  const nameKey = mode==='regions' ? 'nom_region' : 'nom_fr';
+  const vals = geo.features.map(f => cmpLookup(ch4, f.properties[nameKey], mode))
+                           .filter(v => v > 0)
+                           .sort((a,b)=>a-b);
+  const n = vals.length;
+  if(!n) return [];
+  return [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9].map(p => vals[Math.floor(n*p)] || 0);
+}
+
+function cmpStyle(feature, ch4, brks, mode){
+  const name = mode==='regions' ? feature.properties.nom_region : feature.properties.nom_fr;
+  const v = cmpLookup(ch4, name, mode);
+  return { fillColor: cmpGetColor(v, brks), weight:1, color:'#fff', fillOpacity:0.82 };
+}
+
+function syncMaps(source, target){
+  if(cmpSyncing) return;
+  cmpSyncing = true;
+  target.setView(source.getCenter(), source.getZoom(), { animate:false });
+  cmpSyncing = false;
+}
+
+async function openCompare(){
+  const overlay = document.getElementById('compareOverlay');
+  overlay.classList.add('visible');
+  // Synchroniser l'année comparée avec l'année courante si elle n'est plus dispo
+  if(!getAvailableYears().includes(cmpYear)) cmpYear = currentYear;
+  renderCmpYearBtns();
+  document.getElementById('cmpYearLabel').textContent = cmpYear;
+
+  // Détruire les anciennes cartes si elles existent
+  if(cmpMapFOD){ cmpMapFOD.remove(); cmpMapFOD = null; }
+  if(cmpMapTNO){ cmpMapTNO.remove(); cmpMapTNO = null; }
+
+  const center = map.getCenter();
+  const zoom   = map.getZoom();
+  const mode   = currentMode;
+
+  // Créer les deux cartes
+  cmpMapFOD = L.map('mapFOD', { zoomControl:false, attributionControl:false }).setView(center, zoom);
+  cmpMapTNO = L.map('mapTNO', { zoomControl:false, attributionControl:false }).setView(center, zoom);
+
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}").addTo(cmpMapFOD);
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{zIndex:10}).addTo(cmpMapFOD);
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}").addTo(cmpMapTNO);
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{zIndex:10}).addTo(cmpMapTNO);
+
+  // Synchronisation zoom/pan
+  cmpMapFOD.on('move', () => syncMaps(cmpMapFOD, cmpMapTNO));
+  cmpMapTNO.on('move', () => syncMaps(cmpMapTNO, cmpMapFOD));
+
+  // Charger les données
+  const geo = mode==='regions' ? REGIONS || await fetch("data/regions.geojson").then(r=>r.json())
+                                : COMMUNES || await fetch("data/communes.geojson").then(r=>r.json());
+
+  const [fodData, tnoData] = await Promise.all([
+    loadCmpData('fod', cmpYear, mode),
+    loadCmpData('tno', cmpYear, mode)
+  ]);
+
+  const fodBreaks = cmpComputeBreaks(fodData, geo, mode);
+  const tnoBreaks = cmpComputeBreaks(tnoData, geo, mode);
+
+  const nameKey = mode==='regions' ? 'nom_region' : 'nom_fr';
+
+  L.geoJSON(geo, {
+    style: f => cmpStyle(f, fodData, fodBreaks, mode),
+    onEachFeature:(f,l) => {
+      const n = f.properties[nameKey];
+      const v = cmpLookup(fodData, n, mode);
+      l.bindPopup(`<b>${n}</b><br>FOD ${cmpYear}<br>CH₄ : ${v.toFixed(2)} ${(window.t?window.t('carte.legend.unit','t/an'):'t/an')}`);
+    }
+  }).addTo(cmpMapFOD);
+
+  L.geoJSON(geo, {
+    style: f => cmpStyle(f, tnoData, tnoBreaks, mode),
+    onEachFeature:(f,l) => {
+      const n = f.properties[nameKey];
+      const v = cmpLookup(tnoData, n, mode);
+      l.bindPopup(`<b>${n}</b><br>TNO ${cmpYear}<br>CH₄ : ${v.toFixed(2)} ${(window.t?window.t('carte.legend.unit','t/an'):'t/an')}`);
+    }
+  }).addTo(cmpMapTNO);
+
+  // Légende commune
+  const leg = document.getElementById('cmpLegend');
+  const cmpLegLabel = (window.t ? window.t('carte.cmp.legend', 'Faible → Élevé (t/an)') : 'Faible → Élevé (t/an)');
+  leg.innerHTML = '<span style="color:#ccc;font-weight:700;margin-right:6px;">CH₄</span>'
+    + CMP_COLORS.map(c=>`<span style="background:${c}"></span>`).join('')
+    + `<span style="color:#ccc;margin-left:6px;">${cmpLegLabel}</span>`;
+
+  cmpMapFOD.invalidateSize();
+  cmpMapTNO.invalidateSize();
+}
+
+document.getElementById('compareBtn').addEventListener('click', openCompare);
+
+// ================= MODE SWIPE FOD vs TNO =================
+let swipeActive   = false;
+let swipeControl  = null;
+let swipeLayerFOD = null;
+let swipeLayerTNO = null;
+let swipeBreaks   = [];
+
+function swipeColor(v){
+  if(!swipeBreaks.length) return "#ccc";
+  return v > swipeBreaks[8] ? "#800026" :
+         v > swipeBreaks[7] ? "#BD0026" :
+         v > swipeBreaks[6] ? "#E31A1C" :
+         v > swipeBreaks[5] ? "#FC4E2A" :
+         v > swipeBreaks[4] ? "#FD8D3C" :
+         v > swipeBreaks[3] ? "#FEB24C" :
+         v > swipeBreaks[2] ? "#FED976" :
+         v > swipeBreaks[1] ? "#FFEDA0" :
+         v > swipeBreaks[0] ? "#FFF7BC" :
+                              "#FFFFE5";
+}
+
+function swipeLookup(data, name, mode){
+  if (mode === 'regions'){
+    const cleanName = name.replace(/^r[ée]gion\s+de\s+/i,"");
+    const candidates = [
+      regionKey(name),
+      slug(cleanName),
+      slug(cleanName.replace(/['‘’]/g,"")),
+      slug(cleanName.replace(/^l['‘’\s]+/i,""))
+    ];
+    for(const k of candidates){ if (data[k] != null) return data[k]; }
+    return 0;
+  }
+  return data[slug(name)] || 0;
+}
+
+async function enableSwipe(){
+  if (swipeActive) return;
+  if (typeof L.control.sideBySide !== 'function'){
+    alert('Plugin leaflet-side-by-side non chargé. Vérifie la connexion internet.');
+    return;
+  }
+  // Charge en parallèle FOD et TNO pour l'année courante / mode courant
+  const suffix = currentMode === 'regions' ? 'region' : 'commune';
+  const [fodData, tnoData] = await Promise.all([
+    fetch(`data/ch4_fod_${currentYear}_${suffix}.json`).then(r => r.ok ? r.json() : {}),
+    fetch(`data/ch4_tno_${currentYear}_${suffix}.json`).then(r => r.ok ? r.json() : {})
+  ]);
+  const geo = currentMode === 'regions' ? REGIONS : COMMUNES;
+  if (!geo){ alert('Géométries non chargées.'); return; }
+
+  // Breaks communs (FOD + TNO réunis) pour avoir la même palette
+  const all = [...Object.values(fodData), ...Object.values(tnoData)]
+              .filter(v => v > 0).sort((a,b) => a - b);
+  if (!all.length){
+    alert('Aucune donnée disponible pour cette année.');
+    return;
+  }
+  swipeBreaks = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+                .map(p => all[Math.floor(all.length * p)] || 0);
+
+  const nameKey = currentMode === 'regions' ? 'nom_region' : 'nom_fr';
+  const unit = (window.t ? window.t('carte.legend.unit', 't/an') : 't/an');
+
+  // Cacher la couche actuelle
+  if (layer) map.removeLayer(layer);
+
+  // IMPORTANT : chaque couche doit avoir son propre pane DOM et renderer
+  // pour que leaflet-side-by-side puisse les cliper indépendamment.
+  if (!map.getPane('swipePaneFOD')) map.createPane('swipePaneFOD');
+  if (!map.getPane('swipePaneTNO')) map.createPane('swipePaneTNO');
+  // Tous les vecteurs doivent passer en haut des couches base
+  map.getPane('swipePaneFOD').style.zIndex = 450;
+  map.getPane('swipePaneTNO').style.zIndex = 451;
+
+  const rendererFOD = L.svg({ pane: 'swipePaneFOD', padding: 0.5 });
+  const rendererTNO = L.svg({ pane: 'swipePaneTNO', padding: 0.5 });
+
+  swipeLayerFOD = L.geoJSON(geo, {
+    renderer: rendererFOD,
+    pane: 'swipePaneFOD',
+    style: f => ({
+      fillColor: swipeColor(swipeLookup(fodData, f.properties[nameKey], currentMode)),
+      weight: 1, color: '#fff', fillOpacity: 0.85
+    }),
+    onEachFeature: (f, lyr) => {
+      const n = f.properties[nameKey];
+      const v = swipeLookup(fodData, n, currentMode);
+      lyr.bindPopup(`<b>${n}</b><br><span style="color:#d12d2d;font-weight:700;">FOD ${currentYear}</span><br>CH₄ : ${fmtFr(v, 2)} ${unit}`);
+    }
+  }).addTo(map);
+
+  swipeLayerTNO = L.geoJSON(geo, {
+    renderer: rendererTNO,
+    pane: 'swipePaneTNO',
+    style: f => ({
+      fillColor: swipeColor(swipeLookup(tnoData, f.properties[nameKey], currentMode)),
+      weight: 1, color: '#fff', fillOpacity: 0.85
+    }),
+    onEachFeature: (f, lyr) => {
+      const n = f.properties[nameKey];
+      const v = swipeLookup(tnoData, n, currentMode);
+      lyr.bindPopup(`<b>${n}</b><br><span style="color:#6366f1;font-weight:700;">TNO ${currentYear}</span><br>CH₄ : ${fmtFr(v, 2)} ${unit}`);
+    }
+  }).addTo(map);
+
+  // Exposer getContainer() pour que leaflet-side-by-side puisse cliper
+  swipeLayerFOD.getContainer = function () { return map.getPane('swipePaneFOD'); };
+  swipeLayerTNO.getContainer = function () { return map.getPane('swipePaneTNO'); };
+
+  swipeControl = L.control.sideBySide(swipeLayerFOD, swipeLayerTNO).addTo(map);
+
+  // Personnaliser le slider (couleur brand)
+  setTimeout(() => {
+    const rng = document.querySelector('.leaflet-sbs-range');
+    const div = document.querySelector('.leaflet-sbs-divider');
+    if (div) { div.style.background = '#d12d2d'; div.style.width = '4px'; div.style.boxShadow = '0 0 14px rgba(209,45,45,0.6)'; }
+    if (rng) { rng.style.accentColor = '#d12d2d'; }
+  }, 50);
+
+  document.getElementById('swipeLabelLeft').classList.remove('hidden');
+  document.getElementById('swipeLabelRight').classList.remove('hidden');
+  document.getElementById('swipeBtn').classList.add('active');
+  swipeActive = true;
+}
+
+function disableSwipe(){
+  if (!swipeActive) return;
+  if (swipeControl){ try { map.removeControl(swipeControl); } catch(e){} swipeControl = null; }
+  if (swipeLayerFOD){ map.removeLayer(swipeLayerFOD); swipeLayerFOD = null; }
+  if (swipeLayerTNO){ map.removeLayer(swipeLayerTNO); swipeLayerTNO = null; }
+  document.getElementById('swipeLabelLeft').classList.add('hidden');
+  document.getElementById('swipeLabelRight').classList.add('hidden');
+  document.getElementById('swipeBtn').classList.remove('active');
+  swipeActive = false;
+  draw();   // restaure la couche normale
+}
+
+document.getElementById('swipeBtn').addEventListener('click', () => {
+  if (swipeActive) disableSwipe(); else enableSwipe();
+});
+
+// Si l'utilisateur change d'année / modèle / mode pendant le swipe, on rafraîchit
+function refreshSwipeIfActive(){
+  if (swipeActive){ disableSwipe(); enableSwipe(); }
+}
+
+document.getElementById('closeCompare').addEventListener('click', () => {
+  document.getElementById('compareOverlay').classList.remove('visible');
+  if(cmpMapFOD){ cmpMapFOD.remove(); cmpMapFOD = null; }
+  if(cmpMapTNO){ cmpMapTNO.remove(); cmpMapTNO = null; }
+});
+
+// Délégation : les boutons d'année sont régénérés dynamiquement
+document.querySelector('.cmp-year-btns').addEventListener('click', e => {
+  const btn = e.target.closest('.cmp-yr-btn');
+  if(!btn) return;
+  document.querySelectorAll('.cmp-yr-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  cmpYear = btn.dataset.y;
+  document.getElementById('cmpYearLabel').textContent = cmpYear;
+  openCompare();
+});
+
+// ================= REFRESH =================
+document.getElementById('refreshBtn').addEventListener('click', async () => {
+  const icon = document.getElementById('refreshIcon');
+  icon.classList.add('spinning');
+  REGIONS = null;
+  COMMUNES = null;
+  CH4 = {};
+  searchIndex = [];
+  await draw();
+  icon.classList.remove('spinning');
+});
+
+// ================= OPACITY =================
+const opacityBtn    = document.getElementById('opacityBtn');
+const opacityPanel  = document.getElementById('opacityPanel');
+const opacitySlider = document.getElementById('opacitySlider');
+const opacityValue  = document.getElementById('opacityValue');
+
+opacityBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  opacityPanel.classList.toggle('visible');
+});
+
+opacitySlider.addEventListener('input', () => {
+  const val = opacitySlider.value;
+  opacityValue.textContent = val + '%';
+  if(layer) layer.setStyle(feature => ({
+    ...style(feature),
+    fillOpacity: val / 100
+  }));
+});
+
+document.addEventListener('click', e => {
+  if(!opacityPanel.contains(e.target) && e.target !== opacityBtn){
+    opacityPanel.classList.remove('visible');
+  }
+});
+
+// ================= EXPORT =================
+const exportBtn  = document.getElementById('exportBtn');
+const exportMenu = document.getElementById('exportMenu');
+
+exportBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  exportMenu.style.display = exportMenu.style.display === 'none' ? 'block' : 'none';
+});
+
+document.addEventListener('click', () => {
+  exportMenu.style.display = 'none';
+});
+
+function exportCSV(){
+  exportMenu.style.display = 'none';
+  if(!Object.keys(CH4).length){ alert('Aucune donnée chargée.'); return; }
+
+  const modeName = currentMode === 'regions' ? 'Région' : 'Commune';
+  let csv = `${modeName};CH4 (t/an);Modèle;Année\n`;
+
+  const geo = currentMode === 'regions' ? REGIONS : COMMUNES;
+  if(!geo){ alert('Données géographiques non chargées.'); return; }
+
+  geo.features.forEach(f => {
+    const name = currentMode === 'regions' ? f.properties.nom_region : f.properties.nom_fr;
+    const val  = getValue(name);
+    csv += `"${name}";${val.toFixed(4)};${currentModel.toUpperCase()};${currentYear}\n`;
+  });
+
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `CH4_${currentModel}_${currentYear}_${currentMode}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportGeoJSON(){
+  exportMenu.style.display = 'none';
+  const geo = currentMode === 'regions' ? REGIONS : COMMUNES;
+  if(!geo){ alert('Données géographiques non chargées.'); return; }
+
+  const enriched = {
+    type: 'FeatureCollection',
+    features: geo.features.map(f => {
+      const name = currentMode === 'regions' ? f.properties.nom_region : f.properties.nom_fr;
+      return {
+        ...f,
+        properties: {
+          ...f.properties,
+          ch4_t_an: getValue(name),
+          modele: currentModel.toUpperCase(),
+          annee: currentYear
+        }
+      };
+    })
+  };
+
+  const blob = new Blob([JSON.stringify(enriched, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `CH4_${currentModel}_${currentYear}_${currentMode}.geojson`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ================= EXPORT SHAPEFILE =================
+function exportSHP(){
+  exportMenu.style.display = 'none';
+  const geo = currentMode === 'regions' ? REGIONS : COMMUNES;
+  if(!geo){ alert('Données géographiques non chargées.'); return; }
+  if(typeof shpwrite === 'undefined'){
+    alert('La librairie shp-write n\'est pas chargée. Vérifie ta connexion internet et recharge la page.');
+    return;
+  }
+
+  // Enrichir le GeoJSON — limite DBF : noms d'attributs <= 10 caractères
+  const enrichedFeatures = geo.features.map(f => {
+    const name = currentMode === 'regions' ? f.properties.nom_region : f.properties.nom_fr;
+    const v    = getValue(name);
+    const code = currentMode === 'regions'
+                 ? (f.properties.CODE_REGIO || '')
+                 : (f.properties.ISO || '');
+    return {
+      type: 'Feature',
+      geometry: f.geometry,
+      properties: {
+        NAME:    String(name || '').substring(0, 60),
+        CODE:    String(code).substring(0, 30),
+        CH4_T_AN: Number(v.toFixed(4)),
+        MODEL:   currentModel.toUpperCase(),
+        YEAR:    parseInt(currentYear, 10)
+      }
+    };
+  });
+
+  const enriched = { type: 'FeatureCollection', features: enrichedFeatures };
+  const fileName = `CH4_${currentModel}_${currentYear}_${currentMode}`;
+
+  function downloadZipBytes(bytes){
+    const blob = new Blob([bytes], { type: 'application/zip' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = fileName + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function base64ToBytes(b64){
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for(let i=0; i<bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  }
+
+  try {
+    const options = {
+      folder: fileName,
+      types: {
+        polygon:  fileName,
+        polyline: fileName + '_lines',
+        point:    fileName + '_points'
+      }
+    };
+    // shpwrite.zip() peut renvoyer soit une string base64 (v0.4.x) soit un Blob/ArrayBuffer/Promise (versions plus récentes)
+    const result = shpwrite.zip(enriched, options);
+    if (result && typeof result.then === 'function') {
+      // Promise (versions récentes)
+      result.then(out => {
+        if (typeof out === 'string')          downloadZipBytes(base64ToBytes(out));
+        else if (out instanceof ArrayBuffer)  downloadZipBytes(out);
+        else if (out instanceof Uint8Array)   downloadZipBytes(out);
+        else if (out instanceof Blob){
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(out);
+          a.download = fileName + '.zip';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          URL.revokeObjectURL(a.href);
+        } else throw new Error('Format ZIP inattendu : ' + typeof out);
+      }).catch(err => {
+        console.error('shpwrite.zip Promise error', err);
+        alert('Erreur génération Shapefile : ' + err.message);
+      });
+    } else if (typeof result === 'string') {
+      downloadZipBytes(base64ToBytes(result));
+    } else if (result instanceof Uint8Array || result instanceof ArrayBuffer) {
+      downloadZipBytes(result);
+    } else {
+      throw new Error('Format ZIP inattendu : ' + typeof result);
+    }
+  } catch(e) {
+    console.error('Erreur exportSHP', e);
+    alert('Erreur lors de l\'export Shapefile : ' + e.message);
+  }
+}
+
+// ================= EXPORT PNG =================
+async function exportPNG(){
+  exportMenu.style.display = 'none';
+
+  const mapEl = document.getElementById('map');
+  const btn   = document.getElementById('exportBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PNG…';
+
+  try {
+    const canvas = await html2canvas(mapEl, {
+      useCORS: true,
+      allowTaint: true,
+      scale: 2,
+      logging: false
+    });
+
+    const a = document.createElement('a');
+    a.download = `CH4_${currentModel}_${currentYear}_${currentMode}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  } catch(e) {
+    alert('Erreur lors de la capture PNG.');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-file-export"></i>Exporter';
+}
+
+// ================= EXPORT PDF =================
+async function exportPDF(){
+  exportMenu.style.display = 'none';
+
+  const mapEl = document.getElementById('map');
+  const btn   = document.getElementById('exportBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PDF…';
+
+  try {
+    const canvas = await html2canvas(mapEl, {
+      useCORS: true,
+      allowTaint: true,
+      scale: 2,
+      logging: false
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+
+    const pW = pdf.internal.pageSize.getWidth();
+    const pH = pdf.internal.pageSize.getHeight();
+
+    // ── En-tête ──
+    pdf.setFillColor(19, 27, 52);
+    pdf.rect(0, 0, pW, 18, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(13);
+    pdf.setFont('helvetica','bold');
+    pdf.text('CH4 MAROC — Géoportail national', 10, 12);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica','normal');
+    pdf.text(`Modèle : ${currentModel.toUpperCase()}   |   Année : ${currentYear}   |   Mode : ${currentMode === 'regions' ? 'Régions' : 'Communes'}`, pW - 10, 12, { align:'right' });
+
+    // ── Carte ──
+    const imgH = pH - 18 - 24;
+    const imgW = pW - 20;
+    const ratio = canvas.width / canvas.height;
+    const drawW = Math.min(imgW, imgH * ratio);
+    const drawH = drawW / ratio;
+    const marginX = (pW - drawW) / 2;
+
+    pdf.addImage(imgData, 'JPEG', marginX, 20, drawW, drawH);
+
+    // ── Statistiques ──
+    const vals = Object.values(CH4).filter(v => v > 0);
+    const total = vals.reduce((s,v) => s+v, 0);
+    const maxVal = Math.max(...vals);
+    const minVal = Math.min(...vals);
+    const geo = currentMode === 'regions' ? REGIONS : COMMUNES;
+    const nameKey = currentMode === 'regions' ? 'nom_region' : 'nom_fr';
+    let maxName = '—', minName = '—';
+    if(geo){
+      geo.features.forEach(f => {
+        const n = f.properties[nameKey];
+        const v = getValue(n);
+        if(v === maxVal) maxName = n;
+        if(v === minVal && v > 0) minName = n;
+      });
+    }
+
+    const yStats = 20 + drawH + 6;
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(80, 80, 80);
+    pdf.setFont('helvetica','bold');
+    pdf.text('STATISTIQUES', 10, yStats + 4);
+    pdf.setFont('helvetica','normal');
+    pdf.text(`Total national : ${total.toFixed(1)} t/an`, 10, yStats + 9);
+    pdf.text(`Maximum : ${maxName} (${maxVal.toFixed(1)} t/an)`, 10, yStats + 14);
+    pdf.text(`Minimum : ${minName} (${minVal.toFixed(1)} t/an)`, 10, yStats + 19);
+
+    // ── Date & source ──
+    const today = new Date().toLocaleDateString('fr-FR');
+    pdf.setFontSize(7);
+    pdf.setTextColor(150,150,150);
+    pdf.text(`Généré le ${today} — Sources : ${currentModel.toUpperCase()}, OpenStreetMap, Esri`, pW - 10, yStats + 19, { align:'right' });
+
+    pdf.save(`CH4_${currentModel}_${currentYear}_${currentMode}.pdf`);
+  } catch(e) {
+    alert('Erreur lors de la génération PDF.');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-file-export"></i>Exporter';
+}
+
+// ================= SEARCH =================
+const searchInput   = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+let searchIndex     = [];
+let searchActive    = -1;
+
+function norm(s){
+  return (s||'').toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g,"")
+    .replace(/[^a-z0-9 ]/g," ")
+    .replace(/\s+/g," ").trim();
+}
+
+async function ensureSearchData(){
+  if(!REGIONS)  REGIONS  = await fetch("data/regions.geojson").then(r=>r.json());
+  if(!COMMUNES) COMMUNES = await fetch("data/communes.geojson").then(r=>r.json());
+}
+
+function buildIndex(){
+  searchIndex = [];
+  if(REGIONS)  REGIONS.features.forEach(f  => { const n=f.properties.nom_region; if(n) searchIndex.push({name:n, type:'region',  feature:f}); });
+  if(COMMUNES) COMMUNES.features.forEach(f => { const n=f.properties.nom_fr;     if(n) searchIndex.push({name:n, type:'commune', feature:f}); });
+}
+
+function zoomToFeature(feature){
+  try{
+    const fc = { type:'FeatureCollection', features:[feature] };
+    const bounds = L.geoJSON(fc).getBounds();
+    if(bounds.isValid()) map.fitBounds(bounds, { maxZoom:11, padding:[60,60] });
+  }catch(e){ console.warn('zoom error', e); }
+
+  if(layer){
+    const targetName = feature.properties.nom_region || feature.properties.nom_fr;
+    layer.eachLayer(l => {
+      const p = l.feature && l.feature.properties;
+      if(!p) return;
+      if((p.nom_region || p.nom_fr) === targetName) l.openPopup();
+    });
+  }
+}
+
+function selectResult(item){
+  searchInput.value = item.name;
+  searchResults.classList.remove('visible');
+  searchActive = -1;
+  zoomToFeature(item.feature);
+}
+
+function renderResults(q){
+  searchResults.innerHTML = '';
+  searchActive = -1;
+  if(q.length < 1){ searchResults.classList.remove('visible'); return; }
+
+  const qn = norm(q);
+  const scored = searchIndex
+    .map(item => {
+      const n = norm(item.name);
+      if(!n.includes(qn)) return null;
+      return { item, score: n.startsWith(qn) ? 0 : 1 };
+    })
+    .filter(Boolean)
+    .sort((a,b) => a.score - b.score)
+    .slice(0, 10);
+
+  if(!scored.length){
+    searchResults.innerHTML = `<div class="search-no-result"><i class="fas fa-search-minus"></i>&nbsp; Aucun résultat pour "<b>${q}</b>"</div>`;
+    searchResults.classList.add('visible');
+    return;
+  }
+
+  scored.forEach(({item}) => {
+    const val      = getValue(item.name);
+    const valTxt   = val > 0 ? `${val.toFixed(1)} t/an` : '—';
+    const icon     = item.type==='region' ? '<i class="fas fa-map"></i>' : '<i class="fas fa-city"></i>';
+    const typeLabel= item.type==='region' ? 'Région' : 'Commune';
+
+    const div = document.createElement('div');
+    div.className = 'search-result-item';
+    div.innerHTML = `
+      <div class="result-icon ${item.type}">${icon}</div>
+      <div class="result-info">
+        <span class="result-name">${item.name}</span>
+        <span class="result-type">${typeLabel}</span>
+      </div>
+      <span class="result-val">${valTxt}</span>`;
+    div.addEventListener('mousedown', e => { e.preventDefault(); selectResult(item); });
+    searchResults.appendChild(div);
+  });
+
+  searchResults.classList.add('visible');
+}
+
+searchInput.addEventListener('focus', async () => {
+  await ensureSearchData();
+  buildIndex();
+  if(searchInput.value.trim()) renderResults(searchInput.value.trim());
+});
+
+searchInput.addEventListener('input', () => renderResults(searchInput.value.trim()));
+
+searchInput.addEventListener('keydown', e => {
+  const items = searchResults.querySelectorAll('.search-result-item');
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    searchActive = Math.min(searchActive+1, items.length-1);
+    items.forEach((el,i) => el.classList.toggle('active', i===searchActive));
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    searchActive = Math.max(searchActive-1, -1);
+    items.forEach((el,i) => el.classList.toggle('active', i===searchActive));
+  } else if(e.key === 'Enter'){
+    e.preventDefault();
+    if(searchActive >= 0 && items[searchActive]){
+      items[searchActive].dispatchEvent(new Event('mousedown'));
+    } else if(items.length){
+      items[0].dispatchEvent(new Event('mousedown'));
+    }
+  } else if(e.key === 'Escape'){
+    searchResults.classList.remove('visible');
+    searchInput.blur();
+  }
+});
+
+searchInput.addEventListener('blur', () => {
+  setTimeout(() => searchResults.classList.remove('visible'), 150);
+});
+
+// ================= SIDEBAR TOGGLE =================
+const sidebarToggleBtn = document.getElementById('sidebarToggle');
+const sidebarEl        = document.querySelector('.sidebar');
+const compassEl        = document.querySelector('.compass-rose');
+
+sidebarToggleBtn.addEventListener('click', () => {
+  const collapsed = sidebarEl.classList.toggle('collapsed');
+  compassEl.classList.toggle('sidebar-collapsed', collapsed);
+  sidebarToggleBtn.style.left = collapsed ? '6px' : '350px';
+  sidebarToggleBtn.innerHTML  = collapsed
+    ? '<i class="fas fa-chevron-right"></i>'
+    : '<i class="fas fa-chevron-left"></i>';
+});
+
+</script>
+
+</body>
+</html>

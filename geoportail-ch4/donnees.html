@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Données — CH4 MAROC</title>
+  <script>
+    (function () {
+      try { document.documentElement.setAttribute('data-theme', localStorage.getItem('ch4theme') || 'dark'); }
+      catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-logo">CH4</div>
+        <div class="brand-text">
+          <div class="name">CH4 MAROC</div>
+          <div class="tagline" data-i18n="brand.tagline">Géoportail national de qualité de l'air</div>
+        </div>
+      </div>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="accueil.html"><i class="fas fa-home"></i> <span data-i18n="nav.accueil">Accueil</span></a></li>
+          <li><a href="carte_interactive.html"><i class="fas fa-map-marked-alt"></i> <span data-i18n="nav.carte">Carte</span></a></li>
+          <li><a href="statistiques.html"><i class="fas fa-chart-line"></i> <span data-i18n="nav.stats">Statistiques</span></a></li>
+          <li><a href="articles.html"><i class="fas fa-book-open"></i> <span data-i18n="nav.articles">Articles</span></a></li>
+          <li><a href="assistant.html"><i class="fas fa-robot"></i> <span data-i18n="nav.assistant">Assistant IA</span></a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="search-bar" style="position:relative;">
+          <input type="search" id="globalSearch" data-i18n-ph="search.placeholder" placeholder="Recherche de sections, articles, régions..." aria-label="Recherche" autocomplete="off" />
+          <i class="fa fa-search search-icon"></i>
+          <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Basculer le thème" title="Basculer clair/sombre">
+          <i class="fas fa-sun"></i>
+        </button>
+        <div class="lang-toggle" id="langToggle">
+          <button class="lang-btn active" data-lang="fr">FR</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+        <div class="user-avatar" title="Projet de Fin d'Études 2026">👤</div>
+      </div>
+    </header>
+
+    <div class="submenu" role="navigation" aria-label="Catégories thématiques">
+      <a href="donnees.html" class="active" data-i18n="sub.donnees">Données</a>
+      <a href="carte_interactive.html?model=fod"   data-i18n="sub.fod">Modèle FOD</a>
+      <a href="carte_interactive.html?model=tno"   data-i18n="sub.tno">Modèle TNO</a>
+      <a href="statistiques.html"                  data-i18n="sub.analyse">Analyse</a>
+      <a href="carte_interactive.html?year=2024"   data-i18n="sub.tendances">Tendances 2024</a>
+      <a href="articles.html"                      data-i18n="sub.publications">Publications</a>
+    </div>
+
+    <main>
+      <section class="datasets-section" id="donnees" style="margin-top:24px;">
+        <h2 class="section-title" data-i18n="data.title"><i class="fas fa-database"></i> Données disponibles</h2>
+        <p class="section-sub" data-i18n="data.sub">Jeux de données CH4 couvrant 4 décennies, 2 modèles, 16 régions et 1 538 communes du Maroc</p>
+        <div class="datasets-grid">
+          <div class="dataset-card">
+            <div class="dataset-icon"><i class="fas fa-map"></i></div>
+            <div class="dataset-name" data-i18n="ds1.name">Régions — Modèle FOD</div>
+            <div class="dataset-desc" data-i18n="ds1.desc">Émissions CH4 par région administrative (16 régions) via le modèle First Order Decay</div>
+            <div class="dataset-meta">
+              <span class="dataset-tag">FOD</span><span class="dataset-tag">GeoJSON</span><span class="dataset-tag">1994–2024</span>
+            </div>
+            <span class="dataset-size"><i class="fas fa-weight-hanging" style="color:var(--accent);margin-right:5px;"></i>4 fichiers · ~6 Ko chacun</span>
+            <a href="carte_interactive.html?model=fod&mode=regions&year=2024" class="dataset-btn" data-i18n="ds.btn">
+              <i class="fas fa-eye"></i> Visualiser
+            </a>
+          </div>
+          <div class="dataset-card">
+            <div class="dataset-icon"><i class="fas fa-city"></i></div>
+            <div class="dataset-name" data-i18n="ds2.name">Communes — Modèle FOD</div>
+            <div class="dataset-desc" data-i18n="ds2.desc">Émissions CH4 pour les 1 538 communes marocaines, estimées par le modèle FOD-IPCC 2006</div>
+            <div class="dataset-meta">
+              <span class="dataset-tag">FOD</span><span class="dataset-tag">JSON</span><span class="dataset-tag">1 538 zones</span>
+            </div>
+            <span class="dataset-size"><i class="fas fa-weight-hanging" style="color:var(--accent);margin-right:5px;"></i>4 fichiers · ~50 Ko chacun</span>
+            <a href="carte_interactive.html?model=fod&mode=communes&year=2024" class="dataset-btn" data-i18n="ds.btn">
+              <i class="fas fa-eye"></i> Visualiser
+            </a>
+          </div>
+          <div class="dataset-card">
+            <div class="dataset-icon"><i class="fas fa-flask"></i></div>
+            <div class="dataset-name" data-i18n="ds3.name">Régions — Modèle TNO</div>
+            <div class="dataset-desc" data-i18n="ds3.desc">Estimations CH4 par région selon le modèle TNO, comparables aux données FOD</div>
+            <div class="dataset-meta">
+              <span class="dataset-tag">TNO</span><span class="dataset-tag">GeoJSON</span><span class="dataset-tag">1994–2024</span>
+            </div>
+            <span class="dataset-size"><i class="fas fa-weight-hanging" style="color:var(--accent);margin-right:5px;"></i>4 fichiers · ~6 Ko chacun</span>
+            <a href="carte_interactive.html?model=tno&mode=regions&year=2024" class="dataset-btn" data-i18n="ds.btn">
+              <i class="fas fa-eye"></i> Visualiser
+            </a>
+          </div>
+          <div class="dataset-card">
+            <div class="dataset-icon"><i class="fas fa-vial"></i></div>
+            <div class="dataset-name" data-i18n="ds4.name">Communes — Modèle TNO</div>
+            <div class="dataset-desc" data-i18n="ds4.desc">Estimations CH4 communales par le modèle TNO pour les 4 périodes clés</div>
+            <div class="dataset-meta">
+              <span class="dataset-tag">TNO</span><span class="dataset-tag">JSON</span><span class="dataset-tag">1 538 zones</span>
+            </div>
+            <span class="dataset-size"><i class="fas fa-weight-hanging" style="color:var(--accent);margin-right:5px;"></i>4 fichiers · ~50 Ko chacun</span>
+            <a href="carte_interactive.html?model=tno&mode=communes&year=2024" class="dataset-btn" data-i18n="ds.btn">
+              <i class="fas fa-eye"></i> Visualiser
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">CH4</div>
+        <p data-i18n="footer.brand.desc">Géoportail national de cartographie des émissions de méthane issues des déchets ménagers solides au Maroc.</p>
+        <div class="footer-socials">
+          <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+          <a href="#" title="ResearchGate"><i class="fab fa-researchgate"></i></a>
+          <a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.nav.title">Navigation</h4>
+        <ul>
+          <li><a href="accueil.html"><i class="fas fa-home"></i> Accueil</a></li>
+          <li><a href="carte_interactive.html"><i class="fas fa-map"></i> Carte interactive</a></li>
+          <li><a href="statistiques.html"><i class="fas fa-chart-line"></i> Statistiques</a></li>
+          <li><a href="donnees.html"><i class="fas fa-database"></i> Données</a></li>
+          <li><a href="articles.html"><i class="fas fa-book-open"></i> Articles</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.src.title">Sources de données</h4>
+        <ul>
+          <li><a href="https://www.ipcc-nggip.iges.or.jp/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> IPCC NGGIP</a></li>
+          <li><a href="http://environnement.gov.ma/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Min. Environnement Maroc</a></li>
+          <li><a href="https://www.hcp.ma/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> HCP Maroc</a></li>
+          <li><a href="https://www.openstreetmap.org/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> OpenStreetMap</a></li>
+          <li><a href="https://www.esri.com/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Esri Satellite</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.contact.title">Contact</h4>
+        <ul class="footer-contact">
+          <li><i class="fas fa-envelope"></i> contact@ch4maroc.ma</li>
+          <li><i class="fas fa-university"></i> Université — Département SIG</li>
+          <li><i class="fas fa-map-marker-alt"></i> Maroc</li>
+        </ul>
+        <div class="footer-badge" data-i18n="footer.badge">
+          <i class="fas fa-shield-alt"></i> Données à usage académique
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span data-i18n="footer.bot.left">© 2026 CH4 MAROC — Projet de Fin d'Études. Tous droits réservés.</span>
+      <span data-i18n="footer.bot.right">Développé avec <i class="fas fa-heart" style="color:#ff5c35;"></i> — Leaflet · GeoJSON · IPCC FOD/TNO</span>
+    </div>
+  </footer>
+
+  <script src="js/common.js"></script>
+</body>
+</html>

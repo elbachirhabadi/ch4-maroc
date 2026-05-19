@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistiques — CH4 MAROC</title>
+  <script>
+    (function () {
+      try { document.documentElement.setAttribute('data-theme', localStorage.getItem('ch4theme') || 'dark'); }
+      catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ====== Statistiques : KPI + multi-onglets ====== */
+    .kpi-grid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:16px;
+      margin: 16px 0 26px;
+    }
+    @media (max-width: 900px){ .kpi-grid{ grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 500px){ .kpi-grid{ grid-template-columns: 1fr; } }
+
+    .kpi-card{
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 20px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      position:relative;
+      overflow:hidden;
+      transition:transform .2s, box-shadow .2s;
+    }
+    .kpi-card:hover{
+      transform:translateY(-2px);
+      box-shadow:0 12px 30px rgba(0,0,0,0.15);
+    }
+    .kpi-card::before{
+      content:"";
+      position:absolute; top:-30px; right:-30px;
+      width:100px; height:100px;
+      border-radius:50%;
+      background: var(--accent-soft);
+      opacity:0.4;
+    }
+    .kpi-card i.kpi-icon{
+      font-size:1.4rem;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .kpi-card .kpi-val{
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .kpi-card .kpi-sub{
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+    }
+    .kpi-card .kpi-trend{
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .kpi-card .kpi-trend.up{ color:#dc2626; }
+    .kpi-card .kpi-trend.down{ color:#16a34a; }
+
+    /* Toolbar par vue */
+    .view-toolbar{
+      display:flex; gap:12px; align-items:center;
+      flex-wrap:wrap;
+      background: var(--surface-alt);
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .view-toolbar label{
+      font-size:0.78rem;
+      font-weight:700;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:0.05em;
+    }
+    .view-toolbar select{
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor:pointer;
+      outline: none;
+    }
+    .view-toolbar select option{ color:#111827; }
+    .view-toolbar .info-tip{
+      margin-left:auto;
+      font-size:0.78rem;
+      color:var(--muted);
+      font-style:italic;
+    }
+
+    /* Grille de graphiques */
+    .charts-grid-2{
+      display:grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 1000px){ .charts-grid-2{ grid-template-columns: 1fr; } }
+
+    /* Heatmap */
+    .heatmap-wrap{
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .heatmap-wrap h3{
+      margin: 0 0 12px 0;
+      font-size: 0.96rem;
+      color: var(--text);
+    }
+    .heatmap-grid{
+      display:grid;
+      gap: 2px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .heatmap-row{
+      display:contents;
+    }
+    .heatmap-cell{
+      min-width: 40px;
+      height: 28px;
+      display:grid;
+      place-items:center;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #fff;
+      border-radius: 4px;
+      cursor:default;
+    }
+    .heatmap-header{
+      background: transparent !important;
+      color: var(--muted) !important;
+      font-weight: 600;
+      min-width: 40px;
+    }
+    .heatmap-region-label{
+      background: transparent !important;
+      color: var(--text) !important;
+      font-weight: 600;
+      justify-content: flex-end !important;
+      padding-right: 8px;
+      font-size: 0.78rem;
+      min-width: 130px;
+      text-align: right;
+    }
+    .heatmap-legend{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      margin-top: 14px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .heatmap-legend-bar{
+      display:inline-flex;
+      height:14px;
+      width:160px;
+      border-radius:8px;
+      background: linear-gradient(90deg, #fee5d9, #fcae91, #fb6a4a, #de2d26, #a50f15);
+    }
+
+    /* Table croissance */
+    .growth-table{
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 14px;
+      overflow: hidden;
+      font-size: 0.88rem;
+    }
+    .growth-table thead{
+      background: var(--surface-alt);
+    }
+    .growth-table th, .growth-table td{
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .growth-table th{
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    .growth-table tr:last-child td{ border-bottom: none; }
+    .growth-table .num{
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+    .growth-table .pct-up{ color: #dc2626; font-weight: 700; }
+    .growth-table .pct-down{ color: #16a34a; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-logo">CH4</div>
+        <div class="brand-text">
+          <div class="name">CH4 MAROC</div>
+          <div class="tagline" data-i18n="brand.tagline">Géoportail national de qualité de l'air</div>
+        </div>
+      </div>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="accueil.html"><i class="fas fa-home"></i> <span data-i18n="nav.accueil">Accueil</span></a></li>
+          <li><a href="carte_interactive.html"><i class="fas fa-map-marked-alt"></i> <span data-i18n="nav.carte">Carte</span></a></li>
+          <li><a href="statistiques.html"><i class="fas fa-chart-line"></i> <span data-i18n="nav.stats">Statistiques</span></a></li>
+          <li><a href="articles.html"><i class="fas fa-book-open"></i> <span data-i18n="nav.articles">Articles</span></a></li>
+          <li><a href="assistant.html"><i class="fas fa-robot"></i> <span data-i18n="nav.assistant">Assistant IA</span></a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="search-bar" style="position:relative;">
+          <input type="search" id="globalSearch" data-i18n-ph="search.placeholder" placeholder="Recherche de sections, articles, régions..." aria-label="Recherche" autocomplete="off" />
+          <i class="fa fa-search search-icon"></i>
+          <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Basculer le thème" title="Basculer clair/sombre">
+          <i class="fas fa-sun"></i>
+        </button>
+        <div class="lang-toggle" id="langToggle">
+          <button class="lang-btn active" data-lang="fr">FR</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+        <div class="user-avatar" title="Projet de Fin d'Études 2026">👤</div>
+      </div>
+    </header>
+
+    <div class="submenu" role="navigation" aria-label="Catégories thématiques">
+      <a href="donnees.html"                       data-i18n="sub.donnees">Données</a>
+      <a href="carte_interactive.html?model=fod"   data-i18n="sub.fod">Modèle FOD</a>
+      <a href="carte_interactive.html?model=tno"   data-i18n="sub.tno">Modèle TNO</a>
+      <a href="statistiques.html" class="active"   data-i18n="sub.analyse">Analyse</a>
+      <a href="carte_interactive.html?year=2024"   data-i18n="sub.tendances">Tendances 2024</a>
+      <a href="articles.html"                      data-i18n="sub.publications">Publications</a>
+    </div>
+
+    <main>
+      <section class="charts-section" id="statistiques" style="margin-top:24px;">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><i class="fas fa-chart-line"></i> Statistiques des émissions CH₄</h2>
+            <p class="section-sub">Analyse multi-modèles (FOD &amp; TNO) sur 1994–2040 — 12 régions du Maroc</p>
+          </div>
+        </div>
+
+        <!-- ────── KPI cards ────── -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <i class="fas fa-globe-africa kpi-icon"></i>
+            <div class="kpi-val" id="kpiTotal">—</div>
+            <div class="kpi-sub">Total national 2024 (FOD)</div>
+            <div class="kpi-trend" id="kpiTotalDelta">—</div>
+          </div>
+          <div class="kpi-card">
+            <i class="fas fa-arrow-trend-up kpi-icon"></i>
+            <div class="kpi-val" id="kpiGrowth">—</div>
+            <div class="kpi-sub">Croissance 1994 → 2040</div>
+            <div class="kpi-trend" id="kpiGrowthDetail">—</div>
+          </div>
+          <div class="kpi-card">
+            <i class="fas fa-trophy kpi-icon"></i>
+            <div class="kpi-val" id="kpiTop">—</div>
+            <div class="kpi-sub">Top émetteur 2024</div>
+            <div class="kpi-trend" id="kpiTopDetail">—</div>
+          </div>
+          <div class="kpi-card">
+            <i class="fas fa-scale-balanced kpi-icon"></i>
+            <div class="kpi-val" id="kpiGap">—</div>
+            <div class="kpi-sub">Écart FOD vs TNO 2024</div>
+            <div class="kpi-trend" id="kpiGapDetail">—</div>
+          </div>
+        </div>
+
+        <!-- ────── Onglets ────── -->
+        <div class="chart-tabs" style="margin-bottom:18px;">
+          <button class="chart-tab active" data-view="regional"><i class="fas fa-map"></i> Vue régionale</button>
+          <button class="chart-tab"        data-view="evolution"><i class="fas fa-chart-line"></i> Évolution temporelle</button>
+          <button class="chart-tab"        data-view="comparison"><i class="fas fa-balance-scale"></i> FOD vs TNO</button>
+          <button class="chart-tab"        data-view="projections"><i class="fas fa-rocket"></i> Projections &amp; Croissance</button>
+        </div>
+
+        <!-- ─────────────────────────────────────────────────────── -->
+        <!-- Onglet 1 : Vue régionale                                 -->
+        <!-- ─────────────────────────────────────────────────────── -->
+        <div id="viewRegional">
+          <div class="view-toolbar">
+            <label>Année :</label>
+            <select id="regYear"></select>
+            <label>Modèle :</label>
+            <select id="regModel">
+              <option value="fod">FOD</option>
+              <option value="tno">TNO</option>
+            </select>
+            <span class="info-tip">Cliquer sur une barre pour voir le détail</span>
+          </div>
+
+          <div class="charts-grid-2">
+            <div class="chart-card">
+              <div class="chart-card-title">
+                <i class="fas fa-chart-bar"></i> Émissions par région —
+                <span id="regChartLabel" style="color:var(--accent);">FOD 2024</span>
+              </div>
+              <canvas id="barChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-card-title"><i class="fas fa-chart-pie"></i> Répartition nationale</div>
+              <canvas id="doughnutChart"></canvas>
+              <div class="chart-summary" id="chartSummary"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─────────────────────────────────────────────────────── -->
+        <!-- Onglet 2 : Évolution temporelle                          -->
+        <!-- ─────────────────────────────────────────────────────── -->
+        <div id="viewEvolution" style="display:none;">
+          <div class="view-toolbar">
+            <label>Modèle :</label>
+            <select id="evoModel">
+              <option value="fod">FOD</option>
+              <option value="tno">TNO</option>
+              <option value="both">FOD + TNO</option>
+            </select>
+            <span class="info-tip">Plage : 1994 → 2040</span>
+          </div>
+
+          <div class="chart-card" style="margin-bottom:16px;">
+            <div class="chart-card-title">
+              <i class="fas fa-chart-line"></i> Évolution nationale des émissions CH₄
+            </div>
+            <canvas id="lineChartNational"></canvas>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-card-title">
+              <i class="fas fa-stream"></i> Évolution par région (12 lignes — cliquer la légende pour filtrer)
+            </div>
+            <canvas id="lineChartRegions"></canvas>
+          </div>
+
+          <div class="chart-summary" style="margin-top:18px;" id="evoSummary"></div>
+        </div>
+
+        <!-- ─────────────────────────────────────────────────────── -->
+        <!-- Onglet 3 : Comparaison FOD vs TNO                        -->
+        <!-- ─────────────────────────────────────────────────────── -->
+        <div id="viewComparison" style="display:none;">
+          <div class="view-toolbar">
+            <label>Année de comparaison :</label>
+            <select id="cmpYear"></select>
+            <span class="info-tip">Comparaison côte-à-côte des deux modèles d'inventaire</span>
+          </div>
+
+          <div class="chart-card" style="margin-bottom:16px;">
+            <div class="chart-card-title">
+              <i class="fas fa-chart-bar"></i> Comparaison par région —
+              <span id="cmpYearLabel" style="color:var(--accent);">2024</span>
+            </div>
+            <canvas id="comparisonBarChart"></canvas>
+          </div>
+
+          <div class="charts-grid-2">
+            <div class="chart-card">
+              <div class="chart-card-title">
+                <i class="fas fa-arrows-left-right"></i> Écart relatif FOD - TNO (%)
+              </div>
+              <canvas id="comparisonDiffChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-card-title">
+                <i class="fas fa-circle-nodes"></i> Corrélation FOD vs TNO
+              </div>
+              <canvas id="scatterFodTno"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─────────────────────────────────────────────────────── -->
+        <!-- Onglet 4 : Projections & Croissance                      -->
+        <!-- ─────────────────────────────────────────────────────── -->
+        <div id="viewProjections" style="display:none;">
+          <div class="view-toolbar">
+            <label>Modèle :</label>
+            <select id="projModel">
+              <option value="fod">FOD</option>
+              <option value="tno">TNO</option>
+            </select>
+            <span class="info-tip">Données 1994–2024 = historique · 2025–2040 = projections</span>
+          </div>
+
+          <!-- Heatmap -->
+          <div class="heatmap-wrap">
+            <h3><i class="fas fa-th"></i> Heatmap émissions — Région × Année</h3>
+            <div class="heatmap-grid" id="heatmap"></div>
+            <div class="heatmap-legend">
+              <span>Faible</span>
+              <span class="heatmap-legend-bar"></span>
+              <span>Élevé (t/an)</span>
+            </div>
+          </div>
+
+          <div class="charts-grid-2">
+            <div class="chart-card">
+              <div class="chart-card-title">
+                <i class="fas fa-arrow-trend-up"></i> Taux de croissance 1994 → 2040 (%)
+              </div>
+              <canvas id="growthChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-card-title">
+                <i class="fas fa-table"></i> Détail par région
+              </div>
+              <div style="overflow:auto;max-height:380px;">
+                <table class="growth-table" id="growthTable">
+                  <thead>
+                    <tr>
+                      <th>Région</th>
+                      <th class="num">1994</th>
+                      <th class="num">2024</th>
+                      <th class="num">2040</th>
+                      <th class="num">Croissance</th>
+                    </tr>
+                  </thead>
+                  <tbody id="growthTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card" style="margin-top:16px;">
+            <div class="chart-card-title">
+              <i class="fas fa-area-chart"></i> Projection cumulée — Émissions totales 2025 → 2040
+            </div>
+            <canvas id="projCumChart"></canvas>
+          </div>
+        </div>
+
+        <div style="text-align:center;margin-top:30px;">
+          <a href="carte_interactive.html" class="cta-btn cta-primary" style="display:inline-flex;">
+            <i class="fas fa-map-marked-alt"></i> Explorer sur la carte interactive
+          </a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">CH4</div>
+        <p data-i18n="footer.brand.desc">Géoportail national de cartographie des émissions de méthane issues des déchets ménagers solides au Maroc.</p>
+        <div class="footer-socials">
+          <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+          <a href="#" title="ResearchGate"><i class="fab fa-researchgate"></i></a>
+          <a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.nav.title">Navigation</h4>
+        <ul>
+          <li><a href="accueil.html"><i class="fas fa-home"></i> Accueil</a></li>
+          <li><a href="carte_interactive.html"><i class="fas fa-map"></i> Carte interactive</a></li>
+          <li><a href="statistiques.html"><i class="fas fa-chart-line"></i> Statistiques</a></li>
+          <li><a href="donnees.html"><i class="fas fa-database"></i> Données</a></li>
+          <li><a href="articles.html"><i class="fas fa-book-open"></i> Articles</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.src.title">Sources de données</h4>
+        <ul>
+          <li><a href="https://www.ipcc-nggip.iges.or.jp/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> IPCC NGGIP</a></li>
+          <li><a href="http://environnement.gov.ma/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Min. Environnement Maroc</a></li>
+          <li><a href="https://www.hcp.ma/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> HCP Maroc</a></li>
+          <li><a href="https://www.openstreetmap.org/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> OpenStreetMap</a></li>
+          <li><a href="https://www.esri.com/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Esri Satellite</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.contact.title">Contact</h4>
+        <ul class="footer-contact">
+          <li><i class="fas fa-envelope"></i> contact@ch4maroc.ma</li>
+          <li><i class="fas fa-university"></i> Université — Département SIG</li>
+          <li><i class="fas fa-map-marker-alt"></i> Maroc</li>
+        </ul>
+        <div class="footer-badge" data-i18n="footer.badge">
+          <i class="fas fa-shield-alt"></i> Données à usage académique
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span data-i18n="footer.bot.left">© 2026 CH4 MAROC — Projet de Fin d'Études. Tous droits réservés.</span>
+      <span data-i18n="footer.bot.right">Développé avec <i class="fas fa-heart" style="color:#ff5c35;"></i> — Leaflet · GeoJSON · IPCC FOD/TNO</span>
+    </div>
+  </footer>
+
+  <script src="js/common.js"></script>
+  <script>
+  "use strict";
+  /* ═══════════════════════════════════════════════════════════════
+     STATISTIQUES CH4 — Multi-vues, multi-graphiques
+  ═══════════════════════════════════════════════════════════════ */
+  const DATA_PATH = 'data';
+  const YEARS_ALL = ['1994','2004','2014','2024',
+                     '2025','2026','2027','2028','2029','2030',
+                     '2031','2032','2033','2034','2035','2036',
+                     '2037','2038','2039','2040'];
+  const COLOR_FOD = '#ff5c35';
+  const COLOR_TNO = '#6366f1';
+  // 12 couleurs distinctes pour les 12 régions (palette warm pour rester brand)
+  const REGION_COLORS = [
+    '#7f1d1d','#991b1b','#b91c1c','#dc2626','#ef4444','#f87171',
+    '#ea580c','#f97316','#fb923c','#f59e0b','#fbbf24','#facc15'
+  ];
+  const REGION_LABELS_SHORT = {
+    'region-de-tanger-tetouan-al-hoceima': 'Tanger-Tétouan',
+    'region-de-loriental':                 "L'Oriental",
+    'region-de-fes-meknes':                'Fès-Meknès',
+    'region-de-rabat-sale-kenitra':        'Rabat-Salé',
+    'region-de-beni-mellal-khenifra':      'Béni Mellal',
+    'region-de-casablanca-settat':         'Casablanca',
+    'region-de-marrakech-safi':            'Marrakech',
+    'region-de-draa-tafilalet':            'Drâa-Tafilalet',
+    'region-de-souss-massa':               'Souss-Massa',
+    'region-de-guelmim-oued-noun':         'Guelmim',
+    'region-de-laayoune-sakia-el-hamra':   'Laâyoune',
+    'region-de-dakhla-oued-ed-dahab':      'Dakhla',
+  };
+  function labelRegion(key) {
+    return REGION_LABELS_SHORT[key] || key.replace('region-de-','').replace(/-/g,' ');
+  }
+
+  function chartTheme() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    return {
+      tick:    isLight ? '#5b6883'             : '#9aa7c1',
+      grid:    isLight ? 'rgba(15,23,42,.08)'  : 'rgba(255,255,255,.06)',
+      text:    isLight ? '#1a2238'             : '#eef2ff',
+      surface: isLight ? '#ffffff'             : '#0f162d',
+    };
+  }
+
+  function fmt(n){ return Math.round(n).toLocaleString('fr-FR'); }
+  function fmtPct(n){ return (n >= 0 ? '+' : '') + n.toFixed(1) + '%'; }
+  function chartTheme() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    return {
+      tick:    isLight ? '#5b6883'             : '#9aa7c1',
+      grid:    isLight ? 'rgba(15,23,42,.08)'  : 'rgba(255,255,255,.06)',
+      text:    isLight ? '#1a2238'             : '#eef2ff',
+      surface: isLight ? '#ffffff'             : '#0f162d',
+    };
+  }
+  function defaultOpts(){
+    const th = chartTheme();
+    return {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels: { color: th.tick, font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: th.tick, font:{size:10} }, grid: { color: th.grid } },
+        y: { ticks: { color: th.tick, font:{size:10} }, grid: { color: th.grid } }
+      }
+    };
+  }
+
+  /* ────── Stockage des données ────── */
+  const regionData    = { fod:{}, tno:{} };   // {model: {year: {regKey:val}}}
+  const nationalTotals= { fod:{}, tno:{} };
+  let regionKeys = [];
+
+  async function loadYear(model, year) {
+    if (regionData[model][year]) return regionData[model][year];
+    try {
+      const d = await fetch(`${DATA_PATH}/ch4_${model}_${year}_region.json`).then(r => r.json());
+      // Filtre clés agrégées du type "total-maroc"
+      const filtered = {};
+      for (const [k,v] of Object.entries(d)) {
+        if (k.toLowerCase().includes('total')) continue;
+        filtered[k] = v;
+      }
+      regionData[model][year] = filtered;
+      nationalTotals[model][year] = Object.values(filtered).reduce((s,v) => s+v, 0);
+      return filtered;
+    } catch (e) { return {}; }
+  }
+
+  // Cherche la valeur d'une région via plusieurs candidats de clé
+  function lookupValue(yearData, refKey){
+    if (yearData[refKey] != null) return yearData[refKey];
+    const tryKeys = [
+      refKey,
+      refKey.replace('region-de-',''),
+      refKey.replace('region-de-l','l-'),
+      refKey.replace('region-de-l','')
+    ];
+    for (const k of tryKeys) if (yearData[k] != null) return yearData[k];
+    return 0;
+  }
+
+  /* ────────────────────────────────────────────────────── */
+  /* INIT : charge toutes les années + remplit les selects   */
+  /* ────────────────────────────────────────────────────── */
+  let charts = {};   // garde toutes les instances Chart.js
+
+  async function loadAll(){
+    await Promise.all(YEARS_ALL.flatMap(y => [loadYear('fod', y), loadYear('tno', y)]));
+    // Récupère la liste canonique des régions à partir de 2024 FOD (référence)
+    const ref = regionData.fod['2024'] || regionData.fod['1994'] || {};
+    regionKeys = Object.keys(ref);
+  }
+
+  function fillSelect(id, vals, dflt) {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = vals.map(v => `<option value="${v}"${v==dflt?' selected':''}>${v}</option>`).join('');
+  }
+
+  /* ────────────────────────────────────────────────────── */
+  /* KPI CARDS                                               */
+  /* ────────────────────────────────────────────────────── */
+  function buildKPIs(){
+    const fod2024 = regionData.fod['2024'] || {};
+    const fod1994 = regionData.fod['1994'] || {};
+    const fod2040 = regionData.fod['2040'] || {};
+    const tno2024 = regionData.tno['2024'] || {};
+
+    const total2024 = nationalTotals.fod['2024'] || 0;
+    const total2014 = nationalTotals.fod['2014'] || 0;
+    const total1994 = nationalTotals.fod['1994'] || 0;
+    const total2040 = nationalTotals.fod['2040'] || 0;
+    const totalTno  = nationalTotals.tno['2024'] || 0;
+
+    document.getElementById('kpiTotal').textContent = fmt(total2024) + ' t/an';
+    if (total2014 > 0) {
+      const delta = ((total2024 - total2014) / total2014) * 100;
+      const trend = document.getElementById('kpiTotalDelta');
+      trend.textContent = (delta>=0?'↑ ':'↓ ') + fmtPct(delta) + ' vs 2014';
+      trend.className = 'kpi-trend ' + (delta>=0?'up':'down');
+    }
+
+    if (total1994 > 0 && total2040 > 0) {
+      const growth = ((total2040 - total1994) / total1994) * 100;
+      document.getElementById('kpiGrowth').textContent = fmtPct(growth);
+      document.getElementById('kpiGrowthDetail').textContent = `${fmt(total1994)} → ${fmt(total2040)} t/an`;
+    }
+
+    // Top émetteur 2024
+    const sorted = Object.entries(fod2024).sort((a,b) => b[1] - a[1]);
+    if (sorted.length) {
+      const [topKey, topVal] = sorted[0];
+      document.getElementById('kpiTop').textContent = labelRegion(topKey);
+      const pct = (topVal / total2024) * 100;
+      document.getElementById('kpiTopDetail').textContent = `${fmt(topVal)} t/an (${pct.toFixed(1)}% du total)`;
+    }
+
+    // Écart FOD vs TNO 2024
+    if (total2024 > 0 && totalTno > 0) {
+      const gap = ((total2024 - totalTno) / totalTno) * 100;
+      document.getElementById('kpiGap').textContent = fmtPct(gap);
+      document.getElementById('kpiGapDetail').textContent = `FOD ${fmt(total2024)} · TNO ${fmt(totalTno)}`;
+    }
+  }
+
+  /* ────────────────────────────────────────────────────── */
+  /* ONGLET 1 : Vue régionale                                */
+  /* ────────────────────────────────────────────────────── */
+  function buildRegionalView(){
+    const model = document.getElementById('regModel').value;
+    const year  = document.getElementById('regYear').value;
+    const data  = regionData[model][year] || {};
+    const th    = chartTheme();
+
+    const sorted = Object.entries(data).sort((a,b) => b[1] - a[1]);
+    const labels = sorted.map(([k]) => labelRegion(k));
+    const values = sorted.map(([,v]) => v);
+    const colors = values.map((_,i) => REGION_COLORS[i % REGION_COLORS.length]);
+
+    if (charts.bar) charts.bar.destroy();
+    charts.bar = new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 6 }] },
+      options: { ...defaultOpts(), indexAxis: 'y',
+        plugins: { legend: { display: false },
+                   tooltip: { callbacks: { label: ctx => `${fmt(ctx.parsed.x)} t/an` } } },
+        scales: {
+          x: { ticks: { color: th.tick }, grid: { color: th.grid },
+               title: { display: true, text: 'Émissions (t/an)', color: th.tick } },
+          y: { ticks: { color: th.text, font:{size:11} }, grid: { display: false } }
+        }
+      }
+    });
+
+    // Doughnut top 5 + autres
+    const top5 = sorted.slice(0,5);
+    const rest = sorted.slice(5).reduce((s,[,v]) => s+v, 0);
+    const dLabels = [...top5.map(([k]) => labelRegion(k)), 'Autres régions'];
+    const dValues = [...top5.map(([,v]) => v), rest];
+    const dColors = ['#dc2626','#ea580c','#f59e0b','#fbbf24','#84cc16','#6366f1'];
+
+    if (charts.doughnut) charts.doughnut.destroy();
+    charts.doughnut = new Chart(document.getElementById('doughnutChart'), {
+      type: 'doughnut',
+      data: { labels: dLabels, datasets: [{ data: dValues, backgroundColor: dColors,
+              borderWidth: 2, borderColor: th.surface, hoverOffset: 8 }] },
+      options: { responsive: true, cutout: '62%',
+        plugins: {
+          legend: { position: 'bottom', labels: { color: th.tick, font:{size:11}, padding: 10 } },
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${fmt(ctx.parsed)} t/an` } }
+        }
+      }
+    });
+
+    // Summary
+    const vals = values.filter(v => v > 0);
+    const total = vals.reduce((s,v) => s+v, 0);
+    const max   = Math.max(...vals);
+    const avg   = total / vals.length;
+    document.getElementById('chartSummary').innerHTML = `
+      <div class="chart-summary-item"><span class="val">${fmt(total)}</span><span class="lbl">Total ${year} (t/an)</span></div>
+      <div class="chart-summary-item"><span class="val">${fmt(max)}</span><span class="lbl">Max — ${labels[0]||''}</span></div>
+      <div class="chart-summary-item"><span class="val">${fmt(avg)}</span><span class="lbl">Moyenne / région</span></div>
+    `;
+
+    document.getElementById('regChartLabel').textContent = `${model.toUpperCase()} ${year}`;
+  }
+
+  /* ────────────────────────────────────────────────────── */
+  /* ONGLET 2 : Évolution temporelle                         */
+  /* ────────────────────────────────────────────────────── */
+  function buildEvolutionView(){
+    const mode = document.getElementById('evoModel').value;
+    const th   = chartTheme();
+
+    const fodVals = YEARS_ALL.map(y => nationalTotals.fod[y] || 0);
+    const tnoVals = YEARS_ALL.map(y => nationalTotals.tno[y] || 0);
+
+    const datasets = [];
+    if (mode === 'fod' || mode === 'both')
+      datasets.push({ label: 'FOD', data: fodVals, borderColor: COLOR_FOD,
+        backgroundColor: 'rgba(255,92,53,.15)', fill: mode==='fod', tension:.3,
+        pointRadius:3, pointHoverRadius:6, borderWidth:2.5 });
+    if (mode === 'tno' || mode === 'both')
+      datasets.push({ label: 'TNO', data: tnoVals, borderColor: COLOR_TNO,
+        backgroundColor: 'rgba(99,102,241,.12)', fill: mode==='tno', tension:.3,
+        pointRadius:3, pointHoverRadius:6, borderWidth:2.5 });
+
+    if (charts.lineNat) charts.lineNat.destroy();
+    charts.lineNat = new Chart(document.getElementById('lineChartNational'), {
+      type: 'line',
+      data: { labels: YEARS_ALL, datasets },
+      options: { ...defaultOpts(),
+        plugins: {
+          legend: { labels: { color: th.tick } },
+          tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)} t/an` } }
+        },
+        scales: {
+          x: { ticks: { color: th.tick, maxRotation:0 }, grid: { color: th.grid } },
+          y: { ticks: { color: th.tick, callback: v => fmt(v) }, grid: { color: th.grid },
+               title: { display:true, text: 'Émissions nationales (t/an)', color: th.tick, font: { size: 11 } } }
+        }
+      }
+    });
+
+    // Multi-line par région (modèle = FOD par défaut, ou selon mode)
+    const m = mode === 'tno' ? 'tno' : 'fod';
+    const regDatasets = regionKeys.map((rk, i) => ({
+      label: labelRegion(rk),
+      data: YEARS_ALL.map(y => regionData[m][y]?.[rk] || 0),
+      borderColor: REGION_COLORS[i % REGION_COLORS.length],
+      backgroundColor: REGION_COLORS[i % REGION_COLORS.length] + '20',
+      tension: .3, pointRadius: 2, borderWidth: 2, fill: false
+    }));
+
+    if (charts.lineReg) charts.lineReg.destroy();
+    charts.lineReg = new Chart(document.getElementById('lineChartRegions'), {
+      type: 'line',
+      data: { labels: YEARS_ALL, datasets: regDatasets },
+      options: { ...defaultOpts(),
+        plugins: {
+          legend: { position:'bottom', labels: { color: th.tick, font:{size:10}, padding:8, boxWidth:10 } },
+          tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } }
+        },
+        scales: {
+          x: { ticks: { color: th.tick, maxRotation:0 }, grid: { color: th.grid } },
+          y: { ticks: { color: th.tick, callback: v => fmt(v) }, grid: { color: th.grid } }
+        }
+      }
+    });
+
+    // Summary
+    document.getElementById('evoSummary').innerHTML = ['1994','2014','2024','2030','2040'].map(y => `
+      <div class="chart-summary-item">
+        <span class="val">${fmt(nationalTotals.fod[y] || 0)}</span>
+        <span class="lbl">FOD ${y} (t/an)</span>
+      </div>`).join('');
+  }
+
+  /* ────────────────────────────────────────────────────── */
+  /* ONGLET 3 : Comparaison FOD vs TNO                       */
+  /* ────────────────────────────────────────────────────── */
+  function buildComparisonView(){
+    const year = document.getElementById('cmpYear').value;
+    const fodD = regionData.fod[year] || {};
+    const tnoD = regionData.tno[year] || {};
+    const th   = chartTheme();
+
+    const labels = regionKeys.map(rk => labelRegion(rk));
+    const fodVals = regionKeys.map(rk => fodD[rk] || 0);
+    const tnoVals = regionKeys.map(rk => lookupValue(tnoD, rk));
+
+    if (charts.cmpBar) charts.cmpBar.destroy();
+    charts.cmpBar = new Chart(document.getElementById('comparisonBarChart'), {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: 'FOD', data: fodVals, backgroundColor: COLOR_FOD, borderRadius: 4 },
+        { label: 'TNO', data: tnoVals, backgroundColor: COLOR_TNO, borderRadius: 4 }
+      ]},
+      options: { ...defaultOpts(),
+        plugins: {
+          legend: { labels: { color: th.tick } },
+          tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)} t/an` } }
+        },
+        scales: {
+          x: { ticks: { color: th.tick, font:{size:10} }, grid: { display: false } },
+          y: { ticks: { color: th.tick, callback: v => fmt(v) }, grid: { color: th.grid } }
+        }
+      }
+    });
+    document.getElementById('cmpYearLabel').textContent = year;
+
+    // Écart relatif (%)
+    const diffs = regionKeys.map((rk, i) => {
+      if (!tnoVals[i]) return 0;
+      return ((fodVals[i] - tnoVals[i]) / tnoVals[i]) * 100;
+    });
+    const diffColors = diffs.map(d => d >= 0 ? COLOR_FOD : '#16a34a');
+
+    if (charts.cmpDiff) charts.cmpDiff.destroy();
+    charts.cmpDiff = new Chart(document.getElementById('comparisonDiffChart'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: diffs, backgroundColor: diffColors, borderRadius: 4 }] },
+      options: { ...defaultOpts(), indexAxis:'y',
+        plugins: { legend: { display:false },
+                   tooltip: { callbacks: { label: ctx => fmtPct(ctx.parsed.x) } } },
+        scales: {
+          x: { ticks: { color: th.tick, callback: v => v + '%' }, grid: { color: th.grid } },
+          y: { ticks: { color: th.text, font:{size:10} }, grid: { display: false } }
+        }
+      }
+    });
+
+    // Scatter FOD vs TNO
+    const points = regionKeys.map((rk, i) => ({ x: tnoVals[i], y: fodVals[i] }));
+    const maxV = Math.max(...fodVals, ...tnoVals);
+    if (charts.scatter) charts.scatter.destroy();
+    charts.scatter = new Chart(document.getElementById('scatterFodTno'), {
+      type: 'scatter',
+      data: { datasets: [
+        { label: 'Régions', data: points, backgroundColor: COLOR_FOD,
+          pointRadius: 7, pointHoverRadius: 10 },
+        { type:'line', label:'y = x (équivalence)', data:[{x:0,y:0},{x:maxV,y:maxV}],
+          borderColor: th.tick, borderDash:[6,4], pointRadius:0, fill:false, borderWidth:1.5 }
+      ]},
+      options: { ...defaultOpts(),
+        plugins: {
+          legend: { labels: { color: th.tick } },
+          tooltip: { callbacks: { label: ctx => {
+            if (ctx.dataset.type === 'line') return '';
+            return `${labels[ctx.dataIndex]} — FOD: ${fmt(ctx.parsed.y)} / TNO: ${fmt(ctx.parsed.x)}`;
+          }}}
+        },
+        scales: {
+          x: { title:{display:true, text:'TNO (t/an)', color:th.tick}, ticks:{color:th.tick, callback:v=>fmt(v)}, grid:{color:th.grid} },
+          y: { title:{display:true, text:'FOD (t/an)', color:th.tick}, ticks:{color:th.tick, callback:v=>fmt(v)}, grid:{color:th.grid} }
+        }
+      }
+    });
+  }
+
+  /* ────────────────────────────────────────────────────── */
+  /* ONGLET 4 : Projections & Croissance                     */
+  /* ────────────────────────────────────────────────────── */
+  function buildProjectionsView(){
+    const model = document.getElementById('projModel').value;
+    const th    = chartTheme();
+
+    // Heatmap
+    const hm = document.getElementById('heatmap');
+    const yearsForHM = YEARS_ALL;
+    const allVals = [];
+    regionKeys.forEach(rk => yearsForHM.forEach(y => {
+      const v = regionData[model][y]?.[rk] || 0;
+      if (v > 0) allVals.push(v);
+    }));
+    const vMin = Math.min(...allVals);
+    const vMax = Math.max(...allVals);
+    function heatColor(v){
+      if (v <= 0) return 'transparent';
+      const t = (v - vMin) / (vMax - vMin);
+      const palette = [
+        [254,229,217],[253,174,144],[251,106, 74],[222, 45, 38],[165, 15, 21]
+      ];
+      const idx = Math.min(palette.length-1, Math.floor(t * palette.length));
+      const [r,g,b] = palette[idx];
+      return `rgb(${r},${g},${b})`;
+    }
+
+    let html = '<div style="display:grid; grid-template-columns: 130px repeat(' + yearsForHM.length + ', 40px); gap:2px;">';
+    html += '<div class="heatmap-cell heatmap-region-label"></div>';
+    yearsForHM.forEach(y => html += `<div class="heatmap-cell heatmap-header">${y.slice(-2)}</div>`);
+    regionKeys.forEach(rk => {
+      html += `<div class="heatmap-cell heatmap-region-label">${labelRegion(rk)}</div>`;
+      yearsForHM.forEach(y => {
+        const v = regionData[model][y]?.[rk] || 0;
+        const bg = heatColor(v);
+        const dark = v > (vMin + (vMax-vMin)*0.5);
+        const col = dark ? '#fff' : '#7f1d1d';
+        html += `<div class="heatmap-cell" style="background:${bg}; color:${col}" title="${labelRegion(rk)} ${y}: ${fmt(v)} t/an">${v>0?Math.round(v/1000):''}</div>`;
+      });
+    });
+    html += '</div>';
+    hm.innerHTML = html;
+
+    // Croissance 1994 → 2040
+    const f1994 = regionData[model]['1994'] || {};
+    const f2040 = regionData[model]['2040'] || {};
+    const growthArr = regionKeys.map(rk => {
+      const v0 = f1994[rk] || 0;
+      const v1 = f2040[rk] || 0;
+      return { key: rk, label: labelRegion(rk), v0, v1, pct: v0 > 0 ? ((v1-v0)/v0)*100 : 0 };
+    }).sort((a,b) => b.pct - a.pct);
+
+    if (charts.growth) charts.growth.destroy();
+    charts.growth = new Chart(document.getElementById('growthChart'), {
+      type: 'bar',
+      data: {
+        labels: growthArr.map(g => g.label),
+        datasets: [{ data: growthArr.map(g => g.pct),
+          backgroundColor: growthArr.map(g => g.pct > 500 ? '#7f1d1d' : g.pct > 200 ? '#dc2626' : g.pct > 50 ? '#ea580c' : '#fbbf24'),
+          borderRadius: 4 }]
+      },
+      options: { ...defaultOpts(), indexAxis: 'y',
+        plugins: { legend: { display:false },
+                   tooltip: { callbacks: { label: ctx => fmtPct(ctx.parsed.x) } } },
+        scales: {
+          x: { ticks: { color: th.tick, callback: v => v + '%' }, grid: { color: th.grid },
+               title: {display:true, text:'Croissance (%)', color:th.tick} },
+          y: { ticks: { color: th.text, font: {size:10} }, grid: { display: false } }
+        }
+      }
+    });
+
+    // Table
+    const f2024 = regionData[model]['2024'] || {};
+    const tbody = document.getElementById('growthTableBody');
+    tbody.innerHTML = growthArr.map(g => `
+      <tr>
+        <td>${g.label}</td>
+        <td class="num">${fmt(g.v0)}</td>
+        <td class="num">${fmt(f2024[g.key] || 0)}</td>
+        <td class="num">${fmt(g.v1)}</td>
+        <td class="num ${g.pct >= 0 ? 'pct-up' : 'pct-down'}">${fmtPct(g.pct)}</td>
+      </tr>
+    `).join('');
+
+    // Projection cumulée 2025 → 2040
+    const projYears = YEARS_ALL.filter(y => parseInt(y) >= 2025);
+    let cum = 0;
+    const cumVals = projYears.map(y => { cum += (nationalTotals[model][y] || 0); return cum; });
+
+    if (charts.projCum) charts.projCum.destroy();
+    charts.projCum = new Chart(document.getElementById('projCumChart'), {
+      type: 'line',
+      data: {
+        labels: projYears,
+        datasets: [{
+          label: `Cumul ${model.toUpperCase()} 2025→année`,
+          data: cumVals,
+          borderColor: model === 'fod' ? COLOR_FOD : COLOR_TNO,
+          backgroundColor: (model === 'fod' ? 'rgba(255,92,53,0.2)' : 'rgba(99,102,241,0.2)'),
+          fill: true, tension: .3, pointRadius: 4, borderWidth: 2.5
+        }]
+      },
+      options: { ...defaultOpts(),
+        plugins: {
+          legend: { labels: { color: th.tick } },
+          tooltip: { callbacks: { label: ctx => `Cumul : ${fmt(ctx.parsed.y)} t` } }
+        },
+        scales: {
+          x: { ticks: { color: th.tick, maxRotation:0 }, grid: { color: th.grid } },
+          y: { ticks: { color: th.tick, callback: v => fmt(v) }, grid: { color: th.grid },
+               title: { display:true, text:'Émissions cumulées (t)', color:th.tick } }
+        }
+      }
+    });
+  }
+
+  /* ────────── Onglets ────────── */
+  let currentView = 'regional';
+  function switchView(view){
+    currentView = view;
+    document.querySelectorAll('.chart-tab').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    ['Regional','Evolution','Comparison','Projections'].forEach(v => {
+      const el = document.getElementById('view' + v);
+      if (el) el.style.display = (v.toLowerCase() === view) ? '' : 'none';
+    });
+    if (view === 'regional')    buildRegionalView();
+    if (view === 'evolution')   buildEvolutionView();
+    if (view === 'comparison')  buildComparisonView();
+    if (view === 'projections') buildProjectionsView();
+  }
+  document.querySelectorAll('.chart-tab').forEach(b => {
+    b.addEventListener('click', () => switchView(b.dataset.view));
+  });
+
+  /* ────────── Listeners selects ────────── */
+  function attachListener(id, fn){
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', fn);
+  }
+
+  /* ────────── Hook thème ────────── */
+  window.onThemeChange = function(){ switchView(currentView); };
+
+  /* ────────── Initialisation ────────── */
+  (async function init(){
+    await loadAll();
+    // Pré-remplir les selects
+    fillSelect('regYear', YEARS_ALL, '2024');
+    fillSelect('cmpYear', YEARS_ALL, '2024');
+
+    attachListener('regYear',  buildRegionalView);
+    attachListener('regModel', buildRegionalView);
+    attachListener('evoModel', buildEvolutionView);
+    attachListener('cmpYear',  buildComparisonView);
+    attachListener('projModel',buildProjectionsView);
+
+    buildKPIs();
+    switchView('regional');
+  })();
+  </script>
+</body>
+</html>

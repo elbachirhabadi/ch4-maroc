@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Articles — CH4 MAROC</title>
+  <script>
+    (function () {
+      try { document.documentElement.setAttribute('data-theme', localStorage.getItem('ch4theme') || 'dark'); }
+      catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ====== Page Articles : améliorations ====== */
+    .art-hero{
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:24px;
+      background: linear-gradient(135deg, rgba(255,92,53,0.10), rgba(209,45,45,0.05));
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:24px 28px;
+      margin: 18px 0 24px;
+    }
+    .art-hero-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      background:var(--accent);
+      color:#fff;
+      padding:4px 12px;
+      border-radius:999px;
+      font-size:0.74rem;
+      font-weight:800;
+      letter-spacing:0.04em;
+      text-transform:uppercase;
+      margin-bottom:10px;
+    }
+    .art-hero h3{
+      margin: 0 0 10px 0;
+      color: var(--text);
+      font-size: 1.35rem;
+      line-height: 1.3;
+    }
+    .art-hero p{
+      color: var(--muted);
+      font-size: 0.94rem;
+      margin: 0 0 14px;
+      line-height: 1.6;
+    }
+    .art-hero-meta{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:0.85rem;
+      margin-bottom: 14px;
+    }
+    .art-hero-meta span{ display:inline-flex; align-items:center; gap:5px; }
+    .art-hero-stats{
+      background: var(--surface);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:18px;
+    }
+    .art-hero-stats h4{
+      margin:0 0 12px 0;
+      font-size:0.78rem;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      color:var(--muted);
+    }
+    .art-stat-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:6px 0;
+      font-size:0.86rem;
+      color:var(--text);
+    }
+    .art-stat-bar{
+      flex:1;
+      margin: 0 10px;
+      height:6px;
+      background:var(--surface-alt);
+      border-radius:99px;
+      overflow:hidden;
+      max-width:120px;
+    }
+    .art-stat-fill{
+      height:100%;
+      background:linear-gradient(90deg, #ff5c35, #d13a1a);
+      border-radius:99px;
+    }
+    .art-stat-val{
+      font-weight:700;
+      color:var(--accent);
+      min-width:24px;
+      text-align:right;
+    }
+
+    @media (max-width: 800px){
+      .art-hero{ grid-template-columns: 1fr; }
+    }
+
+    /* Filtre par catégorie + tri */
+    .art-toolbar{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom: 16px;
+    }
+    .art-sort{
+      margin-left:auto;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      background: var(--surface-alt);
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .art-sort label{
+      font-size:0.78rem;
+      color:var(--muted);
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:0.04em;
+    }
+    .art-sort select{
+      background:transparent;
+      color:var(--text);
+      border:none;
+      outline:none;
+      font-size:0.86rem;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .art-sort select option{ color:#111827; }
+
+    /* Badge type d'article */
+    .art-type{
+      display:inline-block;
+      padding: 2px 8px;
+      border-radius:6px;
+      font-size:0.7rem;
+      font-weight:800;
+      letter-spacing:0.04em;
+      text-transform:uppercase;
+      margin-left:8px;
+      vertical-align:middle;
+    }
+    .art-type.article  { background:rgba(59,130,246,0.18); color:#3b82f6; }
+    .art-type.review   { background:rgba(168,85,247,0.18); color:#a855f7; }
+    .art-type.standard { background:rgba(20,184,166,0.18); color:#14b8a6; }
+    .art-type.report   { background:rgba(234,179,8,0.18);  color:#eab308; }
+
+    /* Nouveaux badges sources */
+    .art-source-badge.pnas   { background:#fce4ec; color:#ad1457; }
+    .art-source-badge.science{ background:#fff3e0; color:#bf360c; }
+    .art-source-badge.gl     { background:#e3f2fd; color:#1565c0; }
+    .art-source-badge.copernicus{ background:#e8f5e9; color:#2e7d32; }
+    .art-source-badge.unep   { background:#e0f7fa; color:#006064; }
+    .art-source-badge.iea    { background:#fff8e1; color:#ef6c00; }
+    .art-source-badge.essd   { background:#f3e5f5; color:#6a1b9a; }
+    .art-source-badge.gov    { background:#ffebee; color:#c62828; }
+    .art-source-badge.wm     { background:#fff3e0; color:#e65100; }
+
+    /* Vignettes thématiques */
+    .art-thumb-wrap{
+      flex-shrink:0;
+      width:130px;
+      height:90px;
+      border-radius:12px;
+      overflow:hidden;
+      position:relative;
+      align-self:center;
+      box-shadow:0 4px 12px rgba(0,0,0,0.2);
+    }
+    .art-thumb-wrap img{
+      position:absolute; inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      /* Effet duotone : la photo prend les couleurs du fond (gradient brand) */
+      mix-blend-mode:luminosity;
+      opacity:0.92;
+      z-index:2;
+      transition:transform .25s, opacity .25s;
+    }
+    .art-item:hover .art-thumb-wrap img{
+      transform:scale(1.05);
+      opacity:1;
+    }
+    .art-thumb-fallback{
+      position:absolute; inset:0;
+      display:grid; place-items:center;
+      color:#fff;
+      font-size:2rem;
+      z-index:1;     /* sous l'image — sert de couleur de mix */
+    }
+    /* Mini icône en bas-droite pour catégoriser même quand l'image charge */
+    .art-icon-corner{
+      position:absolute;
+      bottom:6px; right:6px;
+      width:26px; height:26px;
+      border-radius:50%;
+      background:rgba(0,0,0,0.45);
+      backdrop-filter:blur(4px);
+      display:grid; place-items:center;
+      color:#fff;
+      font-size:0.78rem;
+      z-index:3;
+      box-shadow:0 2px 6px rgba(0,0,0,0.3);
+    }
+    /* Léger overlay pour homogénéiser et donner du contraste au texte/icône */
+    .art-thumb-wrap::after{
+      content:"";
+      position:absolute; inset:0;
+      background:linear-gradient(135deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.25) 100%);
+      z-index:3;
+      pointer-events:none;
+    }
+    /* Palette unifiée — variations de rouge/orange (brand CH4 Maroc) */
+    .art-thumb-fallback.satellite  { background:linear-gradient(135deg,#7f1d1d,#b91c1c); } /* rouge profond */
+    .art-thumb-fallback.politique  { background:linear-gradient(135deg,#991b1b,#7f1d1d); } /* rouge sombre */
+    .art-thumb-fallback.sante      { background:linear-gradient(135deg,#dc2626,#9f1239); } /* rouge-rose */
+    .art-thumb-fallback.tno        { background:linear-gradient(135deg,#dc2626,#b91c1c); } /* rouge */
+    .art-thumb-fallback.ipcc       { background:linear-gradient(135deg,#ef4444,#dc2626); } /* rouge clair */
+    .art-thumb-fallback.maroc      { background:linear-gradient(135deg,#ff5c35,#d13a1a); } /* brand */
+    .art-thumb-fallback.mitigation { background:linear-gradient(135deg,#ea580c,#c2410c); } /* orange */
+    .art-thumb-fallback.fod        { background:linear-gradient(135deg,#f97316,#ea580c); } /* orange clair */
+    .art-thumb-fallback.afrique    { background:linear-gradient(135deg,#f59e0b,#d97706); } /* ambre */
+    .art-thumb-fallback.global     { background:linear-gradient(135deg,#fbbf24,#f59e0b); } /* jaune-ambre */
+    /* Pattern subtil pour ajouter de la texture sans bruit visuel */
+    .art-thumb-fallback::before{
+      content:"";
+      position:absolute; inset:0;
+      background-image:
+        radial-gradient(circle at 25% 30%, rgba(255,255,255,0.10) 0, transparent 40%),
+        radial-gradient(circle at 75% 70%, rgba(0,0,0,0.10) 0, transparent 40%);
+      pointer-events:none;
+    }
+    .art-thumb-fallback i{ position:relative; z-index:1; }
+
+    /* Cacher les mots-clés en bas de chaque article (info redondante avec filtres + vignette) */
+    .art-kw{ display:none !important; }
+
+    /* Section divider */
+    .art-divider{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin: 28px 0 18px;
+    }
+    .art-divider h3{
+      margin:0;
+      color:var(--text);
+      font-size:1.05rem;
+      letter-spacing:0.02em;
+    }
+    .art-divider::after{
+      content:"";
+      flex:1;
+      height:1px;
+      background:var(--border);
+    }
+    .art-divider .count{
+      color:var(--muted);
+      font-size:0.84rem;
+      font-weight:600;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-logo">CH4</div>
+        <div class="brand-text">
+          <div class="name">CH4 MAROC</div>
+          <div class="tagline" data-i18n="brand.tagline">Géoportail national de qualité de l'air</div>
+        </div>
+      </div>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="accueil.html"><i class="fas fa-home"></i> <span data-i18n="nav.accueil">Accueil</span></a></li>
+          <li><a href="carte_interactive.html"><i class="fas fa-map-marked-alt"></i> <span data-i18n="nav.carte">Carte</span></a></li>
+          <li><a href="statistiques.html"><i class="fas fa-chart-line"></i> <span data-i18n="nav.stats">Statistiques</span></a></li>
+          <li><a href="articles.html"><i class="fas fa-book-open"></i> <span data-i18n="nav.articles">Articles</span></a></li>
+          <li><a href="assistant.html"><i class="fas fa-robot"></i> <span data-i18n="nav.assistant">Assistant IA</span></a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="search-bar" style="position:relative;">
+          <input type="search" id="globalSearch" data-i18n-ph="search.placeholder" placeholder="Recherche de sections, articles, régions..." aria-label="Recherche" autocomplete="off" />
+          <i class="fa fa-search search-icon"></i>
+          <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Basculer le thème" title="Basculer clair/sombre">
+          <i class="fas fa-sun"></i>
+        </button>
+        <div class="lang-toggle" id="langToggle">
+          <button class="lang-btn active" data-lang="fr">FR</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+        <div class="user-avatar" title="Projet de Fin d'Études 2026">👤</div>
+      </div>
+    </header>
+
+    <div class="submenu" role="navigation" aria-label="Catégories thématiques">
+      <a href="donnees.html"                       data-i18n="sub.donnees">Données</a>
+      <a href="carte_interactive.html?model=fod"   data-i18n="sub.fod">Modèle FOD</a>
+      <a href="carte_interactive.html?model=tno"   data-i18n="sub.tno">Modèle TNO</a>
+      <a href="statistiques.html"                  data-i18n="sub.analyse">Analyse</a>
+      <a href="carte_interactive.html?year=2024"   data-i18n="sub.tendances">Tendances 2024</a>
+      <a href="articles.html" class="active"       data-i18n="sub.publications">Publications</a>
+    </div>
+
+    <main>
+      <section class="articles-section" id="articles" style="margin-top:24px;">
+        <div class="art-header">
+          <div class="art-header-left">
+            <h2 class="section-title"><i class="fas fa-book-open"></i> Articles scientifiques &amp; références</h2>
+            <p class="section-sub">Bibliographie sur les émissions CH₄ : méthodes d'inventaire (FOD/TNO), imagerie satellite, mitigation, santé climatique et études marocaines.</p>
+          </div>
+          <div class="art-search-wrap">
+            <i class="fas fa-search art-search-icon"></i>
+            <input type="text" id="artSearch" placeholder="Rechercher titre, auteur, revue..." class="art-search-input"/>
+          </div>
+        </div>
+
+        <!-- ====== HERO : article mis en avant ====== -->
+        <div class="art-hero">
+          <div>
+            <span class="art-hero-badge"><i class="fas fa-star"></i> Référence officielle</span>
+            <h3>CH₄ Emissions from Solid Waste Disposal — IPCC Good Practice Guidance</h3>
+            <p>Guide de bonnes pratiques officiel du GIEC pour l'estimation des émissions de méthane issues de l'élimination des déchets solides. C'est la référence mondiale qui fonde la méthode FOD utilisée dans ce géoportail (Tier 1, 2 et 3).</p>
+            <div class="art-hero-meta">
+              <span><i class="fas fa-building"></i> IPCC-NGGIP / IGES</span>
+              <span><i class="far fa-calendar"></i> 2006 — Mise à jour 2019</span>
+              <span><i class="fas fa-language"></i> EN · FR</span>
+              <span><i class="fas fa-file-pdf"></i> PDF officiel</span>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <a href="https://www.ipcc-nggip.iges.or.jp/public/gp/bgp/5_1_CH4_Solid_Waste.pdf" target="_blank" rel="noopener" class="art-btn art-btn-pdf"><i class="fas fa-file-pdf"></i> Télécharger PDF</a>
+              <a href="https://www.ipcc-nggip.iges.or.jp/" target="_blank" rel="noopener" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Site IPCC</a>
+            </div>
+          </div>
+          <div class="art-hero-stats">
+            <h4>📊 Bibliothèque</h4>
+            <div class="art-stat-row">
+              <span>FOD</span>
+              <div class="art-stat-bar"><div class="art-stat-fill" style="width:75%"></div></div>
+              <span class="art-stat-val" id="statFod">—</span>
+            </div>
+            <div class="art-stat-row">
+              <span>Satellite</span>
+              <div class="art-stat-bar"><div class="art-stat-fill" style="width:30%"></div></div>
+              <span class="art-stat-val" id="statSat">—</span>
+            </div>
+            <div class="art-stat-row">
+              <span>Politique</span>
+              <div class="art-stat-bar"><div class="art-stat-fill" style="width:25%"></div></div>
+              <span class="art-stat-val" id="statPol">—</span>
+            </div>
+            <div class="art-stat-row">
+              <span>Mitigation</span>
+              <div class="art-stat-bar"><div class="art-stat-fill" style="width:35%"></div></div>
+              <span class="art-stat-val" id="statMit">—</span>
+            </div>
+            <div class="art-stat-row">
+              <span>Maroc</span>
+              <div class="art-stat-bar"><div class="art-stat-fill" style="width:20%"></div></div>
+              <span class="art-stat-val" id="statMar">—</span>
+            </div>
+            <div class="art-stat-row" style="border-top:1px solid var(--border); margin-top:8px; padding-top:10px; font-weight:700;">
+              <span>Total</span>
+              <span class="art-stat-val" id="statTotal">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== TOOLBAR : filtres + tri ====== -->
+        <div class="art-toolbar">
+          <span class="art-filter-label" style="font-weight:700; color:var(--muted); font-size:0.82rem; text-transform:uppercase; letter-spacing:0.05em;">Filtrer :</span>
+          <button class="art-chip active" data-filter="all">Tous <span id="countAll">—</span></button>
+          <button class="art-chip" data-filter="fod">FOD</button>
+          <button class="art-chip" data-filter="tno">TNO</button>
+          <button class="art-chip" data-filter="satellite">Satellite</button>
+          <button class="art-chip" data-filter="mitigation">Mitigation</button>
+          <button class="art-chip" data-filter="politique">Politique</button>
+          <button class="art-chip" data-filter="sante">Santé</button>
+          <button class="art-chip" data-filter="maroc">Maroc</button>
+          <button class="art-chip" data-filter="afrique">Afrique</button>
+          <button class="art-chip" data-filter="ipcc">IPCC</button>
+          <div class="art-sort">
+            <label for="artSort"><i class="fas fa-sort"></i> Tri</label>
+            <select id="artSort">
+              <option value="recent">Plus récent</option>
+              <option value="ancien">Plus ancien</option>
+              <option value="source">Source A→Z</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <span class="art-count" id="artCount" style="color:var(--muted); font-size:0.86rem;">— résultats</span>
+        </div>
+
+        <div class="art-list" id="artList">
+
+          <div class="art-item" data-tags="fod maroc">
+            <div class="art-source-badge sd">ScienceDirect</div>
+            <div class="art-main">
+              <a href="https://www.sciencedirect.com/science/article/abs/pii/S0924224423002832" target="_blank" rel="noopener" class="art-title">
+                Adding value to unused landfill gas for renewable energy on-site at Oum Azza landfill (Morocco): Environmental feasibility and cost-effectiveness
+              </a>
+              <div class="art-authors">Charki H., El Kabriti M., Bohli A., Yaacoubi A.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Food Research International</span>
+                <span class="art-year">2023</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1016/j.foodres.2023</span>
+              </div>
+              <p class="art-abstract">Valorisation du biogaz produit à la décharge d'Oum Azza (Rabat, Maroc) en électricité. Utilisation des modèles LandGEM et multipha­sique pour estimer la production maximale de CH4 à 64,30 millions m³ (2028). Étude de faisabilité environnementale et rentabilité économique.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>Maroc</span><span>FOD</span><span>Biogaz</span><span>Énergie</span></div>
+                <div class="art-actions">
+                  <a href="https://www.sciencedirect.com/science/article/abs/pii/S0924224423002832" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="fod ipcc afrique">
+            <div class="art-source-badge nat">Nature</div>
+            <div class="art-main">
+              <a href="https://www.nature.com/articles/s41893-024-01307-9" target="_blank" rel="noopener" class="art-title">
+                Methane emissions from landfills differentially underestimated worldwide
+              </a>
+              <div class="art-authors">Cusworth D.H., Duren R.M., Thorpe A.K. et al.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Nature Sustainability</span>
+                <span class="art-year">2024</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1038/s41893-024-01307-9</span>
+              </div>
+              <p class="art-abstract">Étude mondiale montrant que les émissions de méthane issues des décharges sont systématiquement sous-estimées selon les modèles FOD classiques. Analyse satellite des émissions réelles vs estimations IPCC sur 6 continents.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>FOD</span><span>IPCC</span><span>Global</span><span>Satellite</span></div>
+                <div class="art-actions">
+                  <a href="https://www.nature.com/articles/s41893-024-01307-9" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="fod tno ipcc">
+            <div class="art-source-badge sage">SAGE</div>
+            <div class="art-main">
+              <a href="https://journals.sagepub.com/doi/10.1177/0734242X231200742" target="_blank" rel="noopener" class="art-title">
+                The impact of landfill management approaches on methane emissions
+              </a>
+              <div class="art-authors">Scharff H., Soon H.Y., Taremwa S.R., Zegers D., Dick B., Zanon T.V.B., Shamrock J.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Waste Management &amp; Research</span>
+                <span class="art-year">2024</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1177/0734242X231200742</span>
+              </div>
+              <p class="art-abstract">Analyse comparative de l'impact des approches de gestion des décharges sur les émissions de méthane. Comparaison des modèles FOD et TNO dans différents contextes nationaux avec recommandations pour la mitigation.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>FOD</span><span>TNO</span><span>Gestion</span><span>GES</span></div>
+                <div class="art-actions">
+                  <a href="https://journals.sagepub.com/doi/10.1177/0734242X231200742" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="fod afrique">
+            <div class="art-source-badge front">Frontiers</div>
+            <div class="art-main">
+              <a href="https://www.frontiersin.org/journals/sustainable-cities/articles/10.3389/frsc.2024.1432995/full" target="_blank" rel="noopener" class="art-title">
+                Methane emissions from municipal landfills: a case study of Chandigarh and economic evaluation for waste-to-energy generation
+              </a>
+              <div class="art-authors">Sharma A., Gupta R., Singh P.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Frontiers in Sustainable Cities</span>
+                <span class="art-year">2024</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.3389/frsc.2024.1432995</span>
+              </div>
+              <p class="art-abstract">Application du modèle FOD adapté aux conditions locales pour améliorer les estimations d'émissions de CH4 en décharge. Évaluation économique du potentiel de valorisation énergétique du biogaz dans un pays en développement.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>FOD</span><span>Biogaz</span><span>Énergie</span><span>Pays en dev.</span></div>
+                <div class="art-actions">
+                  <a href="https://www.frontiersin.org/journals/sustainable-cities/articles/10.3389/frsc.2024.1432995/full" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="maroc afrique">
+            <div class="art-source-badge spr">Springer</div>
+            <div class="art-main">
+              <a href="https://link.springer.com/article/10.1007/s41207-024-00662-5" target="_blank" rel="noopener" class="art-title">
+                A comprehensive review on solid waste management in Morocco: assessment, challenges and potential transition to a circular economy
+              </a>
+              <div class="art-authors">Auteurs Springer Nature Link</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Euro-Mediterranean Journal for Environmental Integration</span>
+                <span class="art-year">2024</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1007/s41207-024-00662-5</span>
+              </div>
+              <p class="art-abstract">Revue complète de la gestion des déchets solides au Maroc : état des lieux, défis actuels, politiques nationales (PNDM) et transition potentielle vers une économie circulaire. Analyse des émissions GES du secteur des déchets.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>Maroc</span><span>Déchets</span><span>Économie circulaire</span><span>PNDM</span></div>
+                <div class="art-actions">
+                  <a href="https://link.springer.com/article/10.1007/s41207-024-00662-5" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="fod afrique">
+            <div class="art-source-badge nat">Sci. Reports</div>
+            <div class="art-main">
+              <a href="https://www.nature.com/articles/s41598-022-22923-5" target="_blank" rel="noopener" class="art-title">
+                Seasonal methane emission from municipal solid waste disposal sites in Lagos, Nigeria
+              </a>
+              <div class="art-authors">Oyelaran O.A., Bolaji B.O., Waheed M.A.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Scientific Reports — Nature</span>
+                <span class="art-year">2022</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1038/s41598-022-22923-5</span>
+              </div>
+              <p class="art-abstract">Estimation des émissions saisonnières de méthane issues de quatre décharges à Lagos (Nigeria) via le modèle FOD Tier 1 de l'IPCC. Comparaison saison sèche / saison humide pour l'inventaire 2020.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>FOD</span><span>Afrique</span><span>Saisonnier</span><span>IPCC Tier 1</span></div>
+                <div class="art-actions">
+                  <a href="https://www.nature.com/articles/s41598-022-22923-5" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="fod ipcc">
+            <div class="art-source-badge scirp">SCIRP</div>
+            <div class="art-main">
+              <a href="https://www.scirp.org/journal/paperinformation?paperid=137061" target="_blank" rel="noopener" class="art-title">
+                Estimation of Landfill Gas and Its Renewable Energy Potential from the Polesgo Controlled Landfill Using First-Order Decay (FOD) Models
+              </a>
+              <div class="art-authors">Ouedraogo I., Pare S., Yameogo S.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Journal of Geoscience and Environment Protection</span>
+                <span class="art-year">2024</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> SCIRP — paperid=137061</span>
+              </div>
+              <p class="art-abstract">Application du modèle FOD pour estimer le potentiel de gaz de décharge et d'énergie renouvelable à la décharge contrôlée de Polesgo. Paramétrage IPCC 2006 et analyse du potentiel énergétique local.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>FOD</span><span>Biogaz</span><span>IPCC 2006</span><span>Afrique</span></div>
+                <div class="art-actions">
+                  <a href="https://www.scirp.org/journal/paperinformation?paperid=137061" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="ipcc fod tno">
+            <div class="art-source-badge ipcc-b">IPCC</div>
+            <div class="art-main">
+              <a href="https://www.ipcc-nggip.iges.or.jp/public/gp/bgp/5_1_CH4_Solid_Waste.pdf" target="_blank" rel="noopener" class="art-title">
+                CH4 Emissions from Solid Waste Disposal — IPCC Good Practice Guidance
+                <span class="art-type standard">Standard</span>
+              </a>
+              <div class="art-authors">IPCC — Intergovernmental Panel on Climate Change</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-building"></i> IPCC-NGGIP / IGES Japan</span>
+                <span class="art-year">2006</span>
+                <span class="art-doi"><i class="fas fa-file-pdf"></i> PDF officiel disponible</span>
+              </div>
+              <p class="art-abstract">Guide de bonnes pratiques IPCC pour l'estimation des émissions de CH4 issues de l'élimination des déchets solides. Référence officielle mondiale pour le modèle FOD, les facteurs d'émission et les méthodologies Tier 1, 2 et 3.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>IPCC</span><span>FOD</span><span>TNO</span><span>Référence</span><span>Tier 1-3</span></div>
+                <div class="art-actions">
+                  <a href="https://www.ipcc-nggip.iges.or.jp/public/gp/bgp/5_1_CH4_Solid_Waste.pdf" target="_blank" class="art-btn art-btn-pdf"><i class="fas fa-file-pdf"></i> PDF</a>
+                  <a href="https://www.ipcc-nggip.iges.or.jp/" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ────────── Nouveaux articles ────────── -->
+
+          <div class="art-item" data-tags="ipcc">
+            <div class="art-source-badge essd">ESSD</div>
+            <div class="art-main">
+              <a href="https://essd.copernicus.org/articles/12/1561/2020/" target="_blank" rel="noopener" class="art-title">
+                The Global Methane Budget 2000–2017
+                <span class="art-type article">Article</span>
+              </a>
+              <div class="art-authors">Saunois M., Stavert A.R., Poulter B., Bousquet P. et al. (Global Carbon Project)</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Earth System Science Data</span>
+                <span class="art-year">2020</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.5194/essd-12-1561-2020</span>
+              </div>
+              <p class="art-abstract">Bilan mondial du méthane atmosphérique sur 2000-2017. Synthèse des sources anthropiques et naturelles, comparaison des inventaires bottom-up et top-down, avec une décomposition régionale. Une référence indispensable pour situer le Maroc dans le contexte global.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>Global</span><span>Bilan</span><span>Bottom-up</span><span>Top-down</span></div>
+                <div class="art-actions">
+                  <a href="https://essd.copernicus.org/articles/12/1561/2020/" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="satellite tno">
+            <div class="art-source-badge gl">GRL</div>
+            <div class="art-main">
+              <a href="https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2018GL077259" target="_blank" rel="noopener" class="art-title">
+                Toward Global Mapping of Methane With TROPOMI: First Results and Intersatellite Comparison to GOSAT
+                <span class="art-type article">Article</span>
+              </a>
+              <div class="art-authors">Hu H., Hasekamp O., Butz A., Galli A. et al.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Geophysical Research Letters</span>
+                <span class="art-year">2018</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1029/2018GL077259</span>
+              </div>
+              <p class="art-abstract">Première cartographie globale du méthane par TROPOMI (Sentinel-5P, ESA). Comparaison avec GOSAT sur les concentrations XCH4 atmosphériques. La donnée fondatrice de l'imagerie satellite CH4 utilisée aujourd'hui par TNO/Copernicus.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>TROPOMI</span><span>Sentinel-5P</span><span>XCH4</span><span>ESA</span></div>
+                <div class="art-actions">
+                  <a href="https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2018GL077259" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="satellite">
+            <div class="art-source-badge science">Sci. Adv.</div>
+            <div class="art-main">
+              <a href="https://www.science.org/doi/10.1126/sciadv.adh2391" target="_blank" rel="noopener" class="art-title">
+                Attribution of individual methane and carbon dioxide emission sources using EMIT observations from space
+                <span class="art-type article">Article</span>
+              </a>
+              <div class="art-authors">Thorpe A.K., Green R.O., Thompson D.R., Brodrick P.G. et al. (NASA JPL)</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Science Advances</span>
+                <span class="art-year">2023</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1126/sciadv.adh2391</span>
+              </div>
+              <p class="art-abstract">Détection de panaches individuels de CH₄ et CO₂ depuis l'ISS grâce à l'instrument EMIT (Earth Surface Mineral Dust Source Investigation, NASA). Méthode IME (Integrated Mass Enhancement) pour quantifier les flux ponctuels — utilisée dans l'approche imagerie du projet CH4 Maroc.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>EMIT</span><span>NASA JPL</span><span>IME</span><span>Panache</span></div>
+                <div class="art-actions">
+                  <a href="https://www.science.org/doi/10.1126/sciadv.adh2391" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="satellite fod">
+            <div class="art-source-badge science">Sci. Adv.</div>
+            <div class="art-main">
+              <a href="https://www.science.org/doi/10.1126/sciadv.abn9683" target="_blank" rel="noopener" class="art-title">
+                Using satellites to uncover large methane emissions from landfills
+                <span class="art-type article">Article</span>
+              </a>
+              <div class="art-authors">Maasakkers J.D., Varon D.J., Elfarsdóttir A., McKeever J. et al.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Science Advances</span>
+                <span class="art-year">2022</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1126/sciadv.abn9683</span>
+              </div>
+              <p class="art-abstract">Détection par satellite (TROPOMI + GHGSat) des émissions massives de méthane sur 4 grandes décharges (Buenos Aires, Delhi, Lahore, Mumbai). Les flux observés sont 1,4 à 2,6 × supérieurs aux inventaires nationaux — démonstration que les décharges sont sous-estimées.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>Satellite</span><span>Décharges</span><span>TROPOMI</span><span>GHGSat</span></div>
+                <div class="art-actions">
+                  <a href="https://www.science.org/doi/10.1126/sciadv.abn9683" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="politique mitigation ipcc">
+            <div class="art-source-badge unep">UNEP</div>
+            <div class="art-main">
+              <a href="https://www.unep.org/resources/report/global-methane-assessment-benefits-and-costs-mitigating-methane-emissions" target="_blank" rel="noopener" class="art-title">
+                Global Methane Assessment: Benefits and Costs of Mitigating Methane Emissions
+                <span class="art-type report">Rapport</span>
+              </a>
+              <div class="art-authors">UNEP &amp; Climate and Clean Air Coalition (CCAC)</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-building"></i> UN Environment Programme</span>
+                <span class="art-year">2021</span>
+                <span class="art-doi"><i class="fas fa-file-pdf"></i> Rapport intégral en accès libre</span>
+              </div>
+              <p class="art-abstract">Évaluation globale ONU des bénéfices climatiques et sanitaires d'une réduction massive du méthane d'ici 2030. Mesures applicables dans les secteurs énergie, déchets et agriculture. Document fondateur du Global Methane Pledge signé à la COP26.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>UNEP</span><span>CCAC</span><span>GMP</span><span>Politique</span></div>
+                <div class="art-actions">
+                  <a href="https://www.unep.org/resources/report/global-methane-assessment-benefits-and-costs-mitigating-methane-emissions" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="politique mitigation">
+            <div class="art-source-badge iea">IEA</div>
+            <div class="art-main">
+              <a href="https://www.iea.org/reports/global-methane-tracker-2024" target="_blank" rel="noopener" class="art-title">
+                Global Methane Tracker 2024
+                <span class="art-type report">Rapport</span>
+              </a>
+              <div class="art-authors">International Energy Agency (IEA)</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-building"></i> IEA — Paris</span>
+                <span class="art-year">2024</span>
+                <span class="art-doi"><i class="fas fa-globe"></i> Données interactives en ligne</span>
+              </div>
+              <p class="art-abstract">Outil de suivi mondial des émissions de CH₄ du secteur énergétique. Estimations par pays, technologies de mitigation et coûts associés. Comparaisons avec les engagements pris dans le cadre du Global Methane Pledge.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>IEA</span><span>Énergie</span><span>Tracker</span><span>Politique</span></div>
+                <div class="art-actions">
+                  <a href="https://www.iea.org/reports/global-methane-tracker-2024" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="sante mitigation">
+            <div class="art-source-badge science">Science</div>
+            <div class="art-main">
+              <a href="https://www.science.org/doi/10.1126/science.1210026" target="_blank" rel="noopener" class="art-title">
+                Simultaneously Mitigating Near-Term Climate Change and Improving Human Health and Food Security
+                <span class="art-type article">Article</span>
+              </a>
+              <div class="art-authors">Shindell D., Kuylenstierna J.C.I., Vignati E., van Dingenen R. et al.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Science</span>
+                <span class="art-year">2012</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1126/science.1210026</span>
+              </div>
+              <p class="art-abstract">Étude majeure montrant que la réduction du CH₄ et du carbone noir produit des co-bénéfices significatifs sur la santé (moins de mortalité par ozone troposphérique) et la sécurité alimentaire (préservation des rendements agricoles).</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>Santé</span><span>Ozone</span><span>Agriculture</span><span>Co-bénéfices</span></div>
+                <div class="art-actions">
+                  <a href="https://www.science.org/doi/10.1126/science.1210026" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="ipcc mitigation fod">
+            <div class="art-source-badge sage">SAGE</div>
+            <div class="art-main">
+              <a href="https://journals.sagepub.com/doi/10.1177/0734242X07088433" target="_blank" rel="noopener" class="art-title">
+                Mitigation of global greenhouse gas emissions from waste: conclusions and strategies from the IPCC Fourth Assessment Report (AR4)
+                <span class="art-type review">Revue</span>
+              </a>
+              <div class="art-authors">Bogner J., Pipatti R., Hashimoto S., Diaz C. et al.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Waste Management &amp; Research</span>
+                <span class="art-year">2008</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1177/0734242X07088433</span>
+              </div>
+              <p class="art-abstract">Synthèse du chapitre Déchets de l'IPCC AR4. Stratégies de mitigation : captage de biogaz, valorisation énergétique, traitement mécano-biologique, incinération. Référence pour les politiques nationales de gestion des déchets.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>IPCC AR4</span><span>Mitigation</span><span>Stratégies</span><span>Décharges</span></div>
+                <div class="art-actions">
+                  <a href="https://journals.sagepub.com/doi/10.1177/0734242X07088433" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="fod mitigation">
+            <div class="art-source-badge wm">Waste Mgmt</div>
+            <div class="art-main">
+              <a href="https://www.sciencedirect.com/science/article/abs/pii/S0956053X05001868" target="_blank" rel="noopener" class="art-title">
+                Methane mass balance at three landfill sites: What is the efficiency of capture by gas collection systems?
+                <span class="art-type article">Article</span>
+              </a>
+              <div class="art-authors">Spokas K., Bogner J., Chanton J.P., Morcet M., Aran C., Graff C. et al.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Waste Management</span>
+                <span class="art-year">2006</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1016/j.wasman.2005.04.011</span>
+              </div>
+              <p class="art-abstract">Bilan de masse du méthane sur 3 décharges françaises (Lapouyade, Le Vigeant, Montech). Mesure de l'efficacité réelle du captage de biogaz : 35-90% selon couverture et système. Élément clé pour calibrer le facteur k du modèle FOD.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>Bilan masse</span><span>Captage</span><span>France</span><span>FOD</span></div>
+                <div class="art-actions">
+                  <a href="https://www.sciencedirect.com/science/article/abs/pii/S0956053X05001868" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="ipcc mitigation politique">
+            <div class="art-source-badge ipcc-b">IPCC</div>
+            <div class="art-main">
+              <a href="https://www.ipcc.ch/report/ar6/wg3/" target="_blank" rel="noopener" class="art-title">
+                Climate Change 2022: Mitigation of Climate Change — IPCC AR6 Working Group III
+                <span class="art-type standard">Standard</span>
+              </a>
+              <div class="art-authors">IPCC — Working Group III (Mitigation)</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-building"></i> IPCC — Sixth Assessment Report</span>
+                <span class="art-year">2022</span>
+                <span class="art-doi"><i class="fas fa-file-pdf"></i> Rapport complet (PDF + chapitres)</span>
+              </div>
+              <p class="art-abstract">Sixième rapport d'évaluation du GIEC, partie 3 : mitigation. Le chapitre 11 (Industry) et 7 (AFOLU) couvrent les leviers de réduction du méthane. Le PRG mis à jour (28× sur 100 ans) est utilisé dans ce projet.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>IPCC AR6</span><span>WG III</span><span>PRG</span><span>Mitigation</span></div>
+                <div class="art-actions">
+                  <a href="https://www.ipcc.ch/report/ar6/wg3/" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="maroc politique">
+            <div class="art-source-badge gov">Gov.ma</div>
+            <div class="art-main">
+              <a href="http://environnement.gov.ma/fr/dechets" target="_blank" rel="noopener" class="art-title">
+                Plan National des Déchets Ménagers (PNDM) — Royaume du Maroc
+                <span class="art-type report">Rapport</span>
+              </a>
+              <div class="art-authors">Ministère de la Transition Énergétique et du Développement Durable — Maroc</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-building"></i> Département du Développement Durable</span>
+                <span class="art-year">2008–en cours</span>
+                <span class="art-doi"><i class="fas fa-globe"></i> Politique publique nationale</span>
+              </div>
+              <p class="art-abstract">Programme national de modernisation de la gestion des déchets ménagers au Maroc (2008-2030). Objectifs : 100% de collecte urbaine, fermeture des décharges sauvages, création de décharges contrôlées dans toutes les régions. Base des inventaires CH₄ du projet.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>Maroc</span><span>PNDM</span><span>Politique</span><span>Décharges contrôlées</span></div>
+                <div class="art-actions">
+                  <a href="http://environnement.gov.ma/fr/dechets" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="art-item" data-tags="fod ipcc">
+            <div class="art-source-badge spr">Springer</div>
+            <div class="art-main">
+              <a href="https://link.springer.com/article/10.1007/s11356-021-15782-6" target="_blank" rel="noopener" class="art-title">
+                Assessment of methane (CH4) generation from municipal landfills using IPCC and LandGEM models
+                <span class="art-type article">Article</span>
+              </a>
+              <div class="art-authors">Aamir M., Khan S., Imran et al.</div>
+              <div class="art-meta">
+                <span class="art-journal"><i class="fas fa-journal-whills"></i> Environmental Science and Pollution Research</span>
+                <span class="art-year">2022</span>
+                <span class="art-doi"><i class="fas fa-fingerprint"></i> 10.1007/s11356-021-15782-6</span>
+              </div>
+              <p class="art-abstract">Comparaison des modèles IPCC FOD (Tier 1) et LandGEM (US EPA) pour l'estimation du biogaz sur 4 décharges municipales au Pakistan. Démonstre que LandGEM sous-estime de 15-20% par rapport au FOD multi-phasique calibré.</p>
+              <div class="art-footer">
+                <div class="art-kw"><span>FOD</span><span>LandGEM</span><span>EPA</span><span>Comparaison</span></div>
+                <div class="art-actions">
+                  <a href="https://link.springer.com/article/10.1007/s11356-021-15782-6" target="_blank" class="art-btn art-btn-primary"><i class="fas fa-external-link-alt"></i> Lire</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="art-more">
+          <a href="https://scholar.google.com/scholar?q=methane+CH4+landfill+FOD+Morocco+waste" target="_blank" rel="noopener" class="cta-btn cta-secondary" data-i18n="art.more">
+            <i class="fas fa-search"></i> Voir plus sur Google Scholar
+          </a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">CH4</div>
+        <p data-i18n="footer.brand.desc">Géoportail national de cartographie des émissions de méthane issues des déchets ménagers solides au Maroc.</p>
+        <div class="footer-socials">
+          <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+          <a href="#" title="ResearchGate"><i class="fab fa-researchgate"></i></a>
+          <a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.nav.title">Navigation</h4>
+        <ul>
+          <li><a href="accueil.html"><i class="fas fa-home"></i> Accueil</a></li>
+          <li><a href="carte_interactive.html"><i class="fas fa-map"></i> Carte interactive</a></li>
+          <li><a href="statistiques.html"><i class="fas fa-chart-line"></i> Statistiques</a></li>
+          <li><a href="donnees.html"><i class="fas fa-database"></i> Données</a></li>
+          <li><a href="articles.html"><i class="fas fa-book-open"></i> Articles</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.src.title">Sources de données</h4>
+        <ul>
+          <li><a href="https://www.ipcc-nggip.iges.or.jp/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> IPCC NGGIP</a></li>
+          <li><a href="http://environnement.gov.ma/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Min. Environnement Maroc</a></li>
+          <li><a href="https://www.hcp.ma/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> HCP Maroc</a></li>
+          <li><a href="https://www.openstreetmap.org/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> OpenStreetMap</a></li>
+          <li><a href="https://www.esri.com/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Esri Satellite</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.contact.title">Contact</h4>
+        <ul class="footer-contact">
+          <li><i class="fas fa-envelope"></i> contact@ch4maroc.ma</li>
+          <li><i class="fas fa-university"></i> Université — Département SIG</li>
+          <li><i class="fas fa-map-marker-alt"></i> Maroc</li>
+        </ul>
+        <div class="footer-badge" data-i18n="footer.badge">
+          <i class="fas fa-shield-alt"></i> Données à usage académique
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span data-i18n="footer.bot.left">© 2026 CH4 MAROC — Projet de Fin d'Études. Tous droits réservés.</span>
+      <span data-i18n="footer.bot.right">Développé avec <i class="fas fa-heart" style="color:#ff5c35;"></i> — Leaflet · GeoJSON · IPCC FOD/TNO</span>
+    </div>
+  </footer>
+
+  <script src="js/common.js"></script>
+  <script>
+  "use strict";
+  /* Filtre + recherche + tri + stats + vignettes articles */
+  (function () {
+    const listEl   = document.getElementById('artList');
+    const items    = Array.from(document.querySelectorAll('.art-item'));
+    const countEl  = document.getElementById('artCount');
+    const countAll = document.getElementById('countAll');
+    const sortSel  = document.getElementById('artSort');
+
+    // ── 0. Vignettes thématiques : image teintée (duotone) + icône ──
+    // Ordre de priorité : si l'article a plusieurs tags, on prend le premier qui matche ce tableau.
+    const THUMB_PRIORITY = ['satellite','maroc','sante','mitigation','politique','tno','fod','afrique','ipcc'];
+    const THUMB_META = {
+      satellite : { icon:'fa-satellite',       img:'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=70&auto=format&fit=crop' },
+      maroc     : { icon:'fa-mountain-sun',    img:'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=400&q=70&auto=format&fit=crop' },
+      sante     : { icon:'fa-heart-pulse',     img:'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=70&auto=format&fit=crop' },
+      mitigation: { icon:'fa-wind',            img:'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=400&q=70&auto=format&fit=crop' },
+      politique : { icon:'fa-scale-balanced',  img:'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&q=70&auto=format&fit=crop' },
+      tno       : { icon:'fa-cloud',           img:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&q=70&auto=format&fit=crop' },
+      fod       : { icon:'fa-recycle',         img:'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&q=70&auto=format&fit=crop' },
+      afrique   : { icon:'fa-globe-africa',    img:'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=400&q=70&auto=format&fit=crop' },
+      ipcc      : { icon:'fa-leaf',            img:'https://images.unsplash.com/photo-1569163139394-de4798aa62b6?w=400&q=70&auto=format&fit=crop' },
+      global    : { icon:'fa-earth-americas',  img:'https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=400&q=70&auto=format&fit=crop' }
+    };
+
+    function pickThumbCategory(tags){
+      for (const cat of THUMB_PRIORITY) if (tags.includes(cat)) return cat;
+      return 'global';
+    }
+
+    items.forEach(item => {
+      const tagsArr = (item.dataset.tags || '').split(/\s+/);
+      const cat  = pickThumbCategory(tagsArr);
+      const meta = THUMB_META[cat] || THUMB_META.global;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'art-thumb-wrap';
+      wrap.innerHTML = `
+        <div class="art-thumb-fallback ${cat}"><i class="fas ${meta.icon}"></i></div>
+        <img alt="" loading="lazy" src="${meta.img}" onerror="this.remove()">
+        <div class="art-icon-corner"><i class="fas ${meta.icon}"></i></div>
+      `;
+
+      // Insérer la vignette juste après le source-badge
+      const badge = item.querySelector('.art-source-badge');
+      if (badge && badge.nextSibling) item.insertBefore(wrap, badge.nextSibling);
+      else item.appendChild(wrap);
+    });
+
+    // ── 1. Extraire l'année de chaque article + injecter data-year ──
+    items.forEach(item => {
+      const yearText = (item.querySelector('.art-year')?.textContent || '').trim();
+      const m = yearText.match(/\d{4}/);
+      item.dataset.year = m ? parseInt(m[0]) : 0;
+      // Source pour tri alpha
+      item.dataset.source = (item.querySelector('.art-source-badge')?.textContent || '').trim();
+    });
+
+    // ── 2. Statistiques globales (compte par catégorie) ──
+    function recomputeStats() {
+      const total = items.length;
+      const cats = { fod:0, tno:0, satellite:0, mitigation:0, politique:0, sante:0, maroc:0, afrique:0, ipcc:0 };
+      items.forEach(i => {
+        const tags = (i.dataset.tags || '').split(/\s+/);
+        tags.forEach(t => { if (t in cats) cats[t]++; });
+      });
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      set('statFod',  cats.fod);
+      set('statSat',  cats.satellite);
+      set('statPol',  cats.politique);
+      set('statMit',  cats.mitigation);
+      set('statMar',  cats.maroc);
+      set('statTotal',total);
+      if (countAll) countAll.textContent = total;
+
+      // Ajuster les largeurs des barres
+      const fills = document.querySelectorAll('.art-stat-fill');
+      const vals  = [cats.fod, cats.satellite, cats.politique, cats.mitigation, cats.maroc];
+      const max   = Math.max(...vals, 1);
+      fills.forEach((f, i) => {
+        f.style.width = ((vals[i] / max) * 100) + '%';
+      });
+    }
+
+    // ── 3. Tri ──
+    function applySort(mode) {
+      const sorted = [...items];
+      if (mode === 'recent')      sorted.sort((a,b) => (+b.dataset.year) - (+a.dataset.year));
+      else if (mode === 'ancien') sorted.sort((a,b) => (+a.dataset.year) - (+b.dataset.year));
+      else if (mode === 'source') sorted.sort((a,b) => a.dataset.source.localeCompare(b.dataset.source));
+      sorted.forEach(item => listEl.appendChild(item));
+    }
+
+    // ── 4. Filtre + recherche ──
+    let artFilter = 'all', artQuery = '';
+    function applyArtFilter() {
+      let count = 0;
+      items.forEach(item => {
+        const tags = item.dataset.tags || '';
+        const text = item.innerText.toLowerCase();
+        const ok   = (artFilter === 'all' || tags.includes(artFilter))
+                  && (artQuery === '' || text.includes(artQuery));
+        item.classList.toggle('hidden', !ok);
+        if (ok) count++;
+      });
+      countEl.textContent = count + ' résultat' + (count > 1 ? 's' : '');
+    }
+
+    // ── 5. Event listeners ──
+    document.querySelectorAll('.art-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.art-chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        artFilter = btn.dataset.filter;
+        applyArtFilter();
+      });
+    });
+    document.getElementById('artSearch').addEventListener('input', e => {
+      artQuery = e.target.value.trim().toLowerCase();
+      applyArtFilter();
+    });
+    if (sortSel) {
+      sortSel.addEventListener('change', () => applySort(sortSel.value));
+    }
+
+    // ── 6. Init ──
+    recomputeStats();
+    applySort('recent');   // tri par défaut : plus récent
+    applyArtFilter();
+  })();
+  </script>
+</body>
+</html>

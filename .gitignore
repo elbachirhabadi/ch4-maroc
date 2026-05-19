@@ -1,0 +1,56 @@
+# ────────── Python ──────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.venv/
+venv/
+env/
+ENV/
+
+# ────────── Secrets ──────────
+.env
+.env.local
+*.key
+*_secret*
+backend/.env
+
+# ────────── OS / IDE ──────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/
+*.swp
+*~
+
+# ────────── Build / cache ──────────
+node_modules/
+dist/
+build/
+.cache/
+.pytest_cache/
+
+# ────────── Logs / temp ──────────
+*.log
+logs/
+*.tmp
+*.bak
+
+# ────────── Sources brutes (non nécessaires pour le site déployé) ──────────
+# Excel sources à la racine (gardés en local pour retraitement)
+/*.xlsx
+
+# JSON sources à la racine (déjà dupliqués dans geoportail-ch4/data/)
+/ch4_fod_*.json
+/ch4_tno_*.json
+
+# Anciens dossiers obsolètes (avant la refonte geoportail-ch4)
+/mon_projet/
+/existe/
+/data/
+
+# QGIS projet généré (lourd, non utilisé par le site)
+geoportail-ch4/qgis_project/

@@ -1,0 +1,8 @@
+/* Navbar styles */
+.navbar {
+  background: #0c4a8f;
+  border-bottom: 4px solid #082d62;
+}
+.navbar a:hover {
+  color: #ffd764;
+}
