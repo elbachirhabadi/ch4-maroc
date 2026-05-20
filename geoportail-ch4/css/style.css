@@ -274,6 +274,51 @@
       margin-bottom: 24px;
     }
 
+    /* ───────── Bandeau partenaires institutionnels ───────── */
+    .partners-bar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      flex-wrap: wrap;
+    }
+    .partners-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .partners-logos {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      flex-wrap: wrap;
+    }
+    .partner-logo {
+      height: 56px;
+      width: auto;
+      object-fit: contain;
+      filter: brightness(1.08);
+      transition: transform .2s ease, filter .2s ease;
+    }
+    .partner-logo:hover { transform: scale(1.04); }
+    .partners-sep {
+      width: 1px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+    @media (max-width: 600px) {
+      .partners-bar { justify-content: center; text-align: center; }
+      .partner-logo { height: 44px; }
+      .partners-sep { height: 28px; }
+    }
+
     .hero .stats {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1023,6 +1068,13 @@
       border-color:rgba(15,23,42,0.06);
     }
     [data-theme="light"] .hero .stat-card strong{ color:#1a2238; }
+    [data-theme="light"] .partners-bar{
+      background:#f7f9fd;
+      border-color:rgba(15,23,42,0.06);
+    }
+    [data-theme="light"] .partners-label{ color:#566280; }
+    [data-theme="light"] .partner-logo{ filter:none; }
+    [data-theme="light"] .partners-sep{ background:rgba(15,23,42,0.12); }
     [data-theme="light"] .card header{
       background:linear-gradient(180deg, rgba(255,92,53,0.10), transparent 90%);
     }

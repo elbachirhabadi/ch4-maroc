@@ -54,3 +54,6 @@ logs/
 
 # QGIS projet généré (lourd, non utilisé par le site)
 geoportail-ch4/qgis_project/
+
+# Logos sources bruts (les versions utilisées sont dans geoportail-ch4/assets/)
+geoportail-ch4/logo/

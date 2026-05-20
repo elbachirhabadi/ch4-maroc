@@ -194,6 +194,7 @@ const T = {
   'sub.publications':   { fr:'Publications',    en:'Publications' },
   'sub.apropos':        { fr:'À propos',        en:'About' },
   /* Hero (accueil) */
+  'partners.label': { fr:"Sous l'égide de", en:'Under the aegis of' },
   'hero.badge':   { fr:"Portail officiel de suivi de la qualité de l'air et des émissions CH4",
                     en:'Official portal for air quality monitoring and CH4 emissions' },
   'hero.h1':      { fr:'Bienvenue sur le géoportail <span class="accent">CH4 MAROC</span>',
