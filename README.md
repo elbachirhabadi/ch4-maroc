@@ -30,19 +30,21 @@ méthane (CH₄) au Maroc selon les modèles **FOD (IPCC)** et **TNO (Pays-Bas)*
 
 ## Déploiement (production)
 
-### 1) Backend — Render.com
+### 1) Backend — Hugging Face Spaces
 
-1. Crée un compte sur [render.com](https://render.com) (gratuit, login GitHub).
-2. **New +** → **Web Service** → connecte ce repo.
-3. Render détecte automatiquement `render.yaml`.
-4. Dans **Environment**, ajoute la variable `GROQ_API_KEY` avec ta clé Groq
-   (à créer sur [console.groq.com](https://console.groq.com)).
-5. Clique **Deploy**. Au bout de 2–3 min, ton API est en ligne :
-   `https://ch4-maroc-backend.onrender.com`
-6. Vérifie la santé : `https://ch4-maroc-backend.onrender.com/health`
+Le backend est hébergé sur un Space HF (Docker SDK), 100% gratuit, sans carte.
 
-> ℹ️ Le tier gratuit Render **endort** le service après 15 min d'inactivité.
-> La 1ʳᵉ requête après endormissement met ~30 s ; les suivantes sont rapides.
+- URL en prod : https://ebachir-ch4-maroc-backend.hf.space
+- Repo Space : https://huggingface.co/spaces/EBACHIR/ch4-maroc-backend
+- Le secret `GROQ_API_KEY` est configuré dans **Settings → Variables and secrets**.
+
+Pour redéployer manuellement, push un changement vers le repo du Space :
+
+```bash
+# Cloner le Space, copier les fichiers backend/, commit + push
+git clone https://huggingface.co/spaces/EBACHIR/ch4-maroc-backend
+# (puis git add + commit + push)
+```
 
 ### 2) Frontend — Netlify
 
