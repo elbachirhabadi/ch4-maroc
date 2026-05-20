@@ -1,0 +1,2 @@
+# Redirige la racine vers la page d'accueil (rewrite, pas redirect)
+/    /accueil.html    200
